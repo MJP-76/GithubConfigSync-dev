@@ -4,6 +4,21 @@
 
 Home Assistant custom integration for syncing the Home Assistant config folder to GitHub.
 
+## Home Assistant Add-on (Web UI)
+
+This repository now also includes a containerized Home Assistant add-on with ingress UI under:
+
+`addons/github-config-sync/`
+
+Add-on repository metadata is provided via `repository.yaml` so it can be added directly in Home Assistant Add-on Store.
+
+## Installation (Add-on)
+
+1. In Home Assistant, open **Settings → Add-ons → Add-on Store → Repositories**.
+2. Add this repository URL: `https://github.com/MJP-76/GithubConfigSync`.
+3. Install **Github Config Sync** add-on and start it.
+4. Open the add-on web UI (ingress) and configure repository/token settings.
+
 ## Installation (HACS)
 
 1. Open HACS in Home Assistant.

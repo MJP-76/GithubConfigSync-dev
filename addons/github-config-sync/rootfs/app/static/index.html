@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Github Config Sync</title>
+    <style>
+      :root {
+        color-scheme: dark light;
+        --bg: #0f172a;
+        --card: #111827;
+        --muted: #94a3b8;
+        --text: #e2e8f0;
+        --accent: #60a5fa;
+        --ok: #34d399;
+        --err: #f87171;
+      }
+
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: linear-gradient(180deg, #020617 0%, var(--bg) 100%);
+        color: var(--text);
+      }
+
+      .wrap {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      .card {
+        background: color-mix(in hsl, var(--card) 92%, black);
+        border: 1px solid #1f2937;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 16px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 1.6rem;
+      }
+
+      p {
+        margin-top: 0;
+        color: var(--muted);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      label {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      input {
+        border-radius: 10px;
+        border: 1px solid #334155;
+        background: #0b1220;
+        color: var(--text);
+        padding: 10px 12px;
+        font-size: 0.95rem;
+      }
+
+      .row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      button {
+        border: 0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        background: var(--accent);
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #334155;
+      }
+
+      .status {
+        font-size: 0.95rem;
+      }
+
+      .status.ok {
+        color: var(--ok);
+      }
+
+      .status.err {
+        color: var(--err);
+      }
+
+      pre {
+        background: #020617;
+        border: 1px solid #1e293b;
+        border-radius: 12px;
+        padding: 12px;
+        font-size: 0.85rem;
+        white-space: pre-wrap;
+        max-height: 260px;
+        overflow: auto;
+      }
+
+      @media (max-width: 780px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <h1>Github Config Sync</h1>
+        <p>Configure GitHub connectivity and run sync checks from this add-on web UI.</p>
+        <div id="status" class="status">Loading...</div>
+      </div>
+
+      <div class="card">
+        <div class="grid">
+          <div class="field">
+            <label for="repo">GitHub Repository (owner/repo)</label>
+            <input id="repo" placeholder="MJP-76/GithubConfigSync" />
+          </div>
+          <div class="field">
+            <label for="branch">Branch</label>
+            <input id="branch" placeholder="main" />
+          </div>
+          <div class="field">
+            <label for="token">GitHub Token (optional for private repos)</label>
+            <input id="token" type="password" placeholder="ghp_..." />
+          </div>
+          <div class="field">
+            <label for="interval">Sync Interval (minutes)</label>
+            <input id="interval" type="number" min="5" max="1440" />
+          </div>
+        </div>
+        <div class="row" style="margin-top: 12px">
+          <input id="dryRun" type="checkbox" />
+          <label for="dryRun">Dry run mode (no push)</label>
+        </div>
+        <div class="row" style="margin-top: 14px">
+          <button id="saveBtn">Save Settings</button>
+          <button id="syncBtn" class="secondary">Run Sync Now</button>
+          <button id="refreshBtn" class="secondary">Refresh Status</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="margin-top: 0; font-size: 1.1rem">Runtime Status</h2>
+        <pre id="runtime">Loading status...</pre>
+      </div>
+    </div>
+
+    <script>
+      const el = {
+        status: document.getElementById("status"),
+        repo: document.getElementById("repo"),
+        branch: document.getElementById("branch"),
+        token: document.getElementById("token"),
+        interval: document.getElementById("interval"),
+        dryRun: document.getElementById("dryRun"),
+        runtime: document.getElementById("runtime"),
+        saveBtn: document.getElementById("saveBtn"),
+        syncBtn: document.getElementById("syncBtn"),
+        refreshBtn: document.getElementById("refreshBtn"),
+      };
+
+      function setStatus(message, ok = true) {
+        el.status.textContent = message;
+        el.status.className = `status ${ok ? "ok" : "err"}`;
+      }
+
+      async function fetchJson(url, options = {}) {
+        const response = await fetch(url, {
+          headers: { "Content-Type": "application/json" },
+          ...options,
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Request failed");
+        }
+        return data;
+      }
+
+      async function loadOptions() {
+        const data = await fetchJson("/api/options");
+        el.repo.value = data.github_repository || "";
+        el.branch.value = data.github_branch || "main";
+        el.token.value = "";
+        el.interval.value = data.sync_interval_minutes ?? 60;
+        el.dryRun.checked = Boolean(data.dry_run);
+      }
+
+      async function loadStatus() {
+        const data = await fetchJson("/api/status");
+        el.runtime.textContent = JSON.stringify(data.state, null, 2) + "\n\n" + (data.log_tail || "");
+      }
+
+      async function saveOptions() {
+        const payload = {
+          github_repository: el.repo.value.trim(),
+          github_branch: el.branch.value.trim() || "main",
+          github_token: el.token.value.trim(),
+          sync_interval_minutes: Number(el.interval.value || "60"),
+          dry_run: el.dryRun.checked,
+        };
+        await fetchJson("/api/options", { method: "POST", body: JSON.stringify(payload) });
+        setStatus("Settings saved");
+        await loadStatus();
+      }
+
+      async function runSync() {
+        const data = await fetchJson("/api/sync", { method: "POST" });
+        setStatus(data.result || "Sync completed");
+        await loadStatus();
+      }
+
+      el.saveBtn.addEventListener("click", () =>
+        saveOptions().catch((error) => setStatus(error.message, false))
+      );
+      el.syncBtn.addEventListener("click", () =>
+        runSync().catch((error) => setStatus(error.message, false))
+      );
+      el.refreshBtn.addEventListener("click", () =>
+        loadStatus()
+          .then(() => setStatus("Status refreshed"))
+          .catch((error) => setStatus(error.message, false))
+      );
+
+      Promise.all([loadOptions(), loadStatus()])
+        .then(() => setStatus("Ready"))
+        .catch((error) => setStatus(error.message, false));
+    </script>
+  </body>
+  </html>
