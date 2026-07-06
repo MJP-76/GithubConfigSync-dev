@@ -25,7 +25,8 @@ from .const import (
 DEFAULT_REPOSITORY_NAME = "ha-config"
 
 
-class GitHubConfigSyncFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
+@config_entries.HANDLERS.register(DOMAIN)
+class GitHubConfigSyncFlowHandler(config_entries.ConfigFlow):
     VERSION = 1
 
     def __init__(self) -> None:
