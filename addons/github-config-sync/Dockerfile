@@ -1,4 +1,4 @@
-ARG BUILD_FROM
+ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base-python:3.12
 FROM ${BUILD_FROM}
 
 WORKDIR /app
@@ -6,6 +6,7 @@ WORKDIR /app
 COPY rootfs /
 
 RUN chmod a+x /usr/local/bin/start.sh \
+    && (command -v pip3 >/dev/null 2>&1 || apk add --no-cache python3 py3-pip) \
     && pip3 install --no-cache-dir flask==3.0.3
 
 EXPOSE 8099
