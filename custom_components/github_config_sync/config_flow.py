@@ -40,23 +40,27 @@ class GitHubConfigSyncFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input=None):
         errors: dict[str, str] = {}
         if user_input is not None:
-            self._client_id = user_input[CONF_GITHUB_CLIENT_ID]
-            self._interval_hours = user_input[CONF_BACKUP_INTERVAL_HOURS]
-            self._start_time = user_input[CONF_SYNC_START_TIME]
-            self._ignore_patterns = [
-                pattern.strip()
-                for pattern in user_input[CONF_IGNORE_PATTERNS].splitlines()
-                if pattern.strip()
-            ]
-            self._extra_ignore_patterns = user_input[CONF_EXTRA_IGNORE_PATTERNS]
-            try:
-                self._device_flow = await GitHubBackupClient(
-                    self.hass, token="", repository="octocat/hello-world"
-                ).async_start_device_flow(self._client_id)
-            except GitHubError:
-                errors["base"] = "invalid_auth"
+            start_time = user_input[CONF_SYNC_START_TIME].strip()
+            if not _is_valid_hh_mm(start_time):
+                errors[CONF_SYNC_START_TIME] = "invalid_time"
             else:
-                return await self.async_step_device_auth()
+                self._client_id = user_input[CONF_GITHUB_CLIENT_ID]
+                self._interval_hours = user_input[CONF_BACKUP_INTERVAL_HOURS]
+                self._start_time = start_time
+                self._ignore_patterns = [
+                    pattern.strip()
+                    for pattern in user_input[CONF_IGNORE_PATTERNS].splitlines()
+                    if pattern.strip()
+                ]
+                self._extra_ignore_patterns = user_input[CONF_EXTRA_IGNORE_PATTERNS]
+                try:
+                    self._device_flow = await GitHubBackupClient(
+                        self.hass, token="", repository="octocat/hello-world"
+                    ).async_start_device_flow(self._client_id)
+                except GitHubError:
+                    errors["base"] = "invalid_auth"
+                else:
+                    return await self.async_step_device_auth()
 
         schema = vol.Schema(
             {
@@ -68,7 +72,7 @@ class GitHubConfigSyncFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(
                     CONF_SYNC_START_TIME,
                     default=self._start_time,
-                ): vol.All(vol.Match(r"^\d{2}:\d{2}$")),
+                ): str,
                 vol.Optional(
                     CONF_IGNORE_PATTERNS,
                     default="\n".join(self._ignore_patterns),
@@ -182,3 +186,11 @@ class GitHubConfigSyncFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 if line.strip()
             ],
         }
+
+
+def _is_valid_hh_mm(value: str) -> bool:
+    try:
+        parsed = dt.time.fromisoformat(value)
+    except ValueError:
+        return False
+    return value == parsed.strftime("%H:%M")
