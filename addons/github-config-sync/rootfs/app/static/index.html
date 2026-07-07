@@ -744,6 +744,10 @@
             body: JSON.stringify(payload),
           });
           el.repo.value = data.repository || "";
+          el.repoMode.forEach((item) => {
+            item.checked = item.value === "existing";
+          });
+          applyRepoMode();
           await loadRepositories();
           el.repoPicker.value = el.repo.value;
           await saveOptions();
