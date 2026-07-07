@@ -5,7 +5,7 @@ import datetime as dt
 from typing import Callable
 
 from .github_client import GitHubClient
-from .hashing import build_hash_index, diff_hash_indexes
+from .hashing import build_hash_index, diff_hash_indexes, is_ignored
 from .models import SyncConfig, SyncPlan, SyncResult
 
 
@@ -179,6 +179,8 @@ class SyncEngine:
                 if not path.is_file():
                     continue
                 relative = path.relative_to(root).as_posix()
+                if is_ignored(relative):
+                    continue
                 target = f"{version_root}/{prefix}/{relative}" if prefix else f"{version_root}/{relative}"
                 self._put_with_retry(target, path.read_bytes(), message=f"sync: snapshot {target}")
 

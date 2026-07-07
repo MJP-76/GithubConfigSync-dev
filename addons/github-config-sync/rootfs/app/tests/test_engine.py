@@ -230,6 +230,9 @@ class SyncEngineTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "one.yaml").write_text("1", encoding="utf-8")
+            (root / ".cache").mkdir()
+            (root / ".cache" / "brands").mkdir(parents=True)
+            (root / ".cache" / "brands" / "icon.png").write_bytes(b"png")
 
             config = SyncConfig(
                 repository="owner/repo",
@@ -261,6 +264,8 @@ class SyncEngineTests(unittest.TestCase):
 
             self.assertEqual(result.synced_count, 1)
             self.assertGreaterEqual(fake_client.put_content.call_count, 3)
+            uploaded_paths = [call.kwargs["path"] for call in fake_client.put_content.call_args_list]
+            self.assertNotIn("versions/20260707T204145Z/.cache/brands/icon.png", uploaded_paths)
 
     def test_prune_versions_older_than_days_deletes_stale_snapshots(self) -> None:
         config = SyncConfig(
