@@ -2,7 +2,12 @@
 
 ## Unreleased
 
-- Preparing the v0.2.9 release bump.
+- Preparing the v0.2.10 release bump.
+
+## 0.2.10
+
+- Fixed the manual sync route placement so the add-on boots cleanly again.
+- Synced the add-on, integration, docs, and release metadata to v0.2.10.
 
 ## 0.2.9
 
