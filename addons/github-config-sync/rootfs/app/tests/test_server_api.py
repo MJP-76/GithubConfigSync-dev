@@ -270,6 +270,7 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(body["ok"])
         self.assertEqual(body["summary"]["synced_count"], 1)
+        self.assertIn("sync_progress", body["state"])
         self.assertEqual(body["state"]["last_scan"]["added_count"], 1)
         self.assertEqual(body["state"]["last_result"], body["result"])
 
@@ -292,6 +293,7 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(body["ok"])
         self.assertEqual(body["summary"]["synced_count"], 1)
+        self.assertIn("sync_progress", body["state"])
 
     def test_manual_sync_endpoint_uses_retention_days(self) -> None:
         (self._config_root / "one.txt").write_text("one", encoding="utf-8")
@@ -334,6 +336,7 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(body["ok"])
         self.assertEqual(body["summary"]["synced_count"], 1)
+        self.assertIn("sync_progress", body["state"])
 
     def test_device_flow_persists_token_to_both_option_files(self) -> None:
         server.DEVICE_FLOW_PATH.write_text(

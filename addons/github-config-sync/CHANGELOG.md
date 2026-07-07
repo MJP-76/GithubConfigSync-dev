@@ -2,7 +2,12 @@
 
 ## Unreleased
 
-- Preparing the v0.2.11 release bump.
+- Preparing the v0.2.12 release bump.
+
+## 0.2.12
+
+- Added live progress updates to scheduled syncs and clean uploads.
+- Synced the add-on, integration, docs, and release metadata to v0.2.12.
 
 ## 0.2.11
 

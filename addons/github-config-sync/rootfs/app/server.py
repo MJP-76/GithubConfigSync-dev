@@ -13,7 +13,7 @@ from sync.errors import SyncError
 from sync.github_client import GitHubClient
 from sync.hashing import IGNORE_PATTERNS
 
-APP_VERSION = "0.2.11"
+APP_VERSION = "0.2.12"
 APP_PORT = 8099
 DEFAULT_OAUTH_CLIENT_ID = "Ov23li2ycCraodta6WCU"
 
@@ -349,6 +349,7 @@ def trigger_manual_sync():
         )
         engine = SyncEngine(sync_config, previous_hash_index=_load_json(HASH_INDEX_PATH, {}))
         engine.set_cancel_checker(_is_cancel_requested)
+        engine.set_progress_callback(lambda payload: _save_state(_sync_progress_payload(payload)))
         plan, current_hash_index = engine.plan()
         scan = _plan_summary(plan)
         probe_ok, probe_message = engine._github.probe_repository()  # pylint: disable=protected-access
@@ -675,6 +676,7 @@ def trigger_sync():
     try:
         engine = SyncEngine(sync_config, previous_hash_index=_load_json(HASH_INDEX_PATH, {}))
         engine.set_cancel_checker(_is_cancel_requested)
+        engine.set_progress_callback(lambda payload: _save_state(_sync_progress_payload(payload)))
         plan, current_hash_index = engine.plan()
         scan = _plan_summary(plan)
         _append_log(
@@ -776,6 +778,7 @@ def trigger_clean_sync():
         previous_index = _load_json(HASH_INDEX_PATH, {})
         engine = SyncEngine(sync_config, previous_hash_index=previous_index)
         engine.set_cancel_checker(_is_cancel_requested)
+        engine.set_progress_callback(lambda payload: _save_state(_sync_progress_payload(payload)))
         plan, current_hash_index = engine.clean_plan()
         scan = _plan_summary(plan)
         _append_log(
