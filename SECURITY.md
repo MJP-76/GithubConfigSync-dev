@@ -11,9 +11,9 @@
 
 - If repository probing fails with an auth error, confirm the token has `repo` access.
 - If probing fails with a not-found error, confirm the repository name, visibility, and account access.
-- If device-flow login fails, restart authorization from the add-on UI and complete the browser step again.
+- If device-flow login fails, restart authorization from the app UI and complete the browser step again.
 
 ## Operational guidance
 
 - Keep `dry_run` enabled until the repository, token, and sync plan look correct.
-- Review the add-on status panel and logs before enabling live syncs.
+- Review the app status panel and logs before enabling live syncs.

@@ -1,4 +1,4 @@
-# Github Config Sync Add-on
+# Github Config Sync App
 [![CI](https://github.com/MJP-76/GithubConfigSync/actions/workflows/validate.yml/badge.svg)](https://github.com/MJP-76/GithubConfigSync/actions/workflows/validate.yml)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Add--on-03a9f4.svg)](https://www.home-assistant.io/)
 [![HA Ready](https://img.shields.io/badge/Home%20Assistant-Ready-03a9f4.svg)](https://www.home-assistant.io/)
@@ -6,7 +6,9 @@
 [![HASSfest](https://img.shields.io/badge/HASSfest-validated-success.svg)](https://developers.home-assistant.io/docs/add-ons/)
 [![Release](https://img.shields.io/github/v/tag/MJP-76/GithubConfigSync?label=release)](https://github.com/MJP-76/GithubConfigSync/releases)
 
-Containerized Home Assistant add-on with an ingress web UI for GitHub config sync operations. This is a sync tool, not a backup tool.
+Containerized Home Assistant app with an ingress web UI for GitHub config sync operations. This is a sync tool, not a backup tool.
+
+This documentation and code were drafted with AI assistance and then reviewed/edited by the maintainer.
 
 ## Support me
 
@@ -19,10 +21,10 @@ If you find this project useful, and would like to help support its continued de
 ## Version Tracker
 
 <!-- VERSION:START -->
-- Integration version: `0.2.19`
-- Add-on version: `0.2.19`
+- Integration version: `0.2.20`
+- Add-on version: `0.2.20`
 - Channel: `stable`
-- Release tag: `v0.2.19`
+- Release tag: `v0.2.20`
 <!-- VERSION:END -->
 
 ## What it provides
@@ -36,7 +38,7 @@ If you find this project useful, and would like to help support its continued de
 
 ## Architecture
 
-- `server.py` is the add-on API surface and UI backend.
+- `server.py` is the app API surface and UI backend.
 - `sync/engine.py` computes the plan from the current `/config` tree and the saved hash index.
 - AppDaemon configs and apps under `/addon_configs/` are included in the normal sync scan.
 - The mount-point checklist lets you include or exclude standard Home Assistant folders, and the recommended .gitignore keeps the ignore list aligned.

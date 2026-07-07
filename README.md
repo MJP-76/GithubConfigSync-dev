@@ -9,6 +9,8 @@
 
 Home Assistant custom integration for syncing the Home Assistant config folder to GitHub. This is a config sync tool, not a backup tool.
 
+This documentation and code were drafted with AI assistance and then reviewed/edited by the maintainer.
+
 ## Support me
 
 If you find this project useful, and would like to help support its continued development, you can do so here:
@@ -20,13 +22,13 @@ If you find this project useful, and would like to help support its continued de
 ## Version Tracker
 
 <!-- VERSION:START -->
-- Integration version: `0.2.19`
-- Add-on version: `0.2.19`
+- Integration version: `0.2.20`
+- Add-on version: `0.2.20`
 - Channel: `stable`
-- Release tag: `v0.2.19`
+- Release tag: `v0.2.20`
 <!-- VERSION:END -->
 
-To sync versions across integration/add-on/runtime/docs automatically:
+To sync versions across integration/app/runtime/docs automatically:
 
 ```bash
 python3 scripts/sync_versions.py --integration 0.0.20 --addon 0.1.3 --channel stable
@@ -38,13 +40,13 @@ For a dev release:
 python3 scripts/sync_versions.py --integration 0.0.20 --addon 0.1.3 --channel dev
 ```
 
-## Home Assistant Add-on (Web UI)
+## Home Assistant App (Web UI)
 
-This repository now also includes a containerized Home Assistant add-on with ingress UI under:
+This repository now also includes a containerized Home Assistant app with ingress UI under:
 
 `addons/github-config-sync/`
 
-Add-on repository metadata is provided via `repository.yaml` so it can be added directly in Home Assistant Add-on Store.
+App repository metadata is provided via `repository.yaml` so it can be added directly in Home Assistant Add-on Store.
 
 ## Sync defaults
 
@@ -55,8 +57,8 @@ Add-on repository metadata is provided via `repository.yaml` so it can be added 
 ## Architecture
 
 - The custom integration handles Home Assistant entities, config flow, and operator actions.
-- The add-on provides the ingress web UI and the sync runtime API.
-- Sync planning is hash-based: the add-on scans `/config`, diffs against the last saved hash index, and classifies files as added, changed, or removed.
+- The app provides the ingress web UI and the sync runtime API.
+- Sync planning is hash-based: the app scans `/config`, diffs against the last saved hash index, and classifies files as added, changed, or removed.
 - AppDaemon configs and apps under `/addon_configs/` are included in the normal sync scan.
 - The mount-point checklist lets you include or exclude standard Home Assistant folders, and the recommended .gitignore keeps the ignore list aligned.
 - Dry runs do not touch GitHub; live runs probe the repository first, then upsert and delete files through the GitHub Contents API.
@@ -64,7 +66,7 @@ Add-on repository metadata is provided via `repository.yaml` so it can be added 
 - State, logs, device-flow data, and the last hash index live in `/data`.
 - The add-on exposes a stable local API contract via `/api/health`, `/api/status`, `/api/sync`, and `/api/diagnostics`.
 - The generated `.gitignore` includes the common Home Assistant guidance entries such as `secrets.yaml`, `ip_bans.yaml`, `known_devices.yaml`, `.storage/`, and `.cloud/`, while still honoring any local user additions.
-- After a release, Home Assistant may need a rebuild/reinstall to pick up UI changes from the add-on image.
+- After a release, Home Assistant may need a rebuild/reinstall to pick up UI changes from the app image.
 
 ## Runbook
 

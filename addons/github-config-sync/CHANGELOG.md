@@ -2,12 +2,17 @@
 
 ## Unreleased
 
-- Preparing the v0.2.19 release bump.
+- Preparing the v0.2.20 release bump.
+
+## 0.2.20
+
+- Updated the public docs to use app wording instead of add-on wording where user-facing.
+- Synced the app, integration, docs, and release metadata to v0.2.20.
 
 ## 0.2.19
 
 - Updated the mount-point checklist wording and default dropdown behavior.
-- Synced the add-on, integration, docs, and release metadata to v0.2.19.
+- Synced the app, integration, docs, and release metadata to v0.2.19.
 
 ## 0.2.18
 
