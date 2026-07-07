@@ -163,6 +163,10 @@ Use this as the single source of truth for **where we are**, **what is next**, a
 
 - [x] Newly created repositories are selected automatically in the repo picker
 
+## v0.1.11 — Sync Performance Planning
+
+- [x] Track future upload/snapshot performance improvements for later implementation
+
 ## Active Sprint Tracker (Now)
 
 ## Completed
@@ -173,6 +177,7 @@ Use this as the single source of truth for **where we are**, **what is next**, a
 - [x] Close minimum supported Home Assistant version decision
 - [x] Close repo picker org filtering/pagination decision
 - [x] Auto-select newly created repository in the repo picker
+- [x] Track future upload/snapshot performance improvements for later implementation
 
 ---
 
