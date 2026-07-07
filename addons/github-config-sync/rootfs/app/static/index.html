@@ -6,25 +6,23 @@
     <title>Github Config Sync</title>
     <style>
       :root {
-        color-scheme: dark light;
-        --bg: #0b1220;
-        --card: #111827;
-        --card-2: #0f172a;
-        --muted: #94a3b8;
-        --text: #e5eefb;
-        --accent: #5ea0ff;
-        --accent-2: #2563eb;
-        --ok: #34d399;
-        --err: #f87171;
-        --border: #22324a;
+        color-scheme: light dark;
+        --bg: var(--primary-background-color, #f6f7fb);
+        --card: var(--card-background-color, #ffffff);
+        --card-2: var(--secondary-background-color, #f2f4f8);
+        --muted: var(--secondary-text-color, #6b7280);
+        --text: var(--primary-text-color, #111827);
+        --accent: var(--accent-color, #3b82f6);
+        --accent-2: var(--accent-color, #2563eb);
+        --ok: var(--state-active-color, #10b981);
+        --err: var(--error-color, #ef4444);
+        --border: var(--divider-color, #dbe3ee);
       }
 
       body {
         margin: 0;
         font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-        background:
-          radial-gradient(circle at top, rgba(94, 160, 255, 0.12), transparent 30%),
-          linear-gradient(180deg, #020617 0%, var(--bg) 100%);
+        background: var(--bg);
         color: var(--text);
       }
 
@@ -35,12 +33,12 @@
       }
 
       .card {
-        background: linear-gradient(180deg, var(--card) 0%, color-mix(in hsl, var(--card) 88%, black) 100%);
+        background: var(--card);
         border: 1px solid var(--border);
         border-radius: 18px;
         padding: 20px 22px;
         margin-bottom: 18px;
-        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+        box-shadow: none;
       }
 
       h1 {
@@ -73,7 +71,7 @@
 
       input {
         border-radius: 10px;
-        border: 1px solid #334155;
+        border: 1px solid var(--border);
         background: var(--card-2);
         color: var(--text);
         padding: 10px 12px;
@@ -82,7 +80,7 @@
 
       select {
         border-radius: 10px;
-        border: 1px solid #334155;
+        border: 1px solid var(--border);
         background: var(--card-2);
         color: var(--text);
         padding: 10px 12px;
@@ -100,15 +98,16 @@
         border: 0;
         border-radius: 10px;
         padding: 10px 14px;
-        background: linear-gradient(180deg, var(--accent) 0%, var(--accent-2) 100%);
-        color: white;
+        background: var(--accent);
+        color: var(--text-primary-color, #ffffff);
         font-weight: 600;
         cursor: pointer;
-        box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+        box-shadow: none;
       }
 
       button.secondary {
-        background: #334155;
+        background: var(--secondary-background-color, #e5e7eb);
+        color: var(--primary-text-color, #111827);
         box-shadow: none;
       }
 
@@ -132,8 +131,8 @@
         gap: 8px;
         padding: 7px 11px;
         border-radius: 999px;
-        background: rgba(148, 163, 184, 0.12);
-        border: 1px solid rgba(148, 163, 184, 0.16);
+        background: var(--card-2);
+        border: 1px solid var(--border);
       }
 
       .status.ok {
@@ -165,14 +164,14 @@
 
       .notice {
         border-left: 3px solid var(--accent);
-        background: rgba(94, 160, 255, 0.08);
+        background: color-mix(in srgb, var(--accent) 10%, var(--card));
         padding: 10px 12px;
         border-radius: 10px;
       }
 
       pre {
-        background: #020617;
-        border: 1px solid #1f2a3b;
+        background: var(--card-2);
+        border: 1px solid var(--border);
         border-radius: 12px;
         padding: 12px;
         font-size: 0.85rem;

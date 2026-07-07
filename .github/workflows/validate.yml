@@ -19,6 +19,18 @@ jobs:
         working-directory: addons/github-config-sync/rootfs/app
         run: python -m unittest discover -s tests -p "test_*.py"
 
+  python-compile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile integration and add-on Python sources
+        run: python -m compileall custom_components/github_config_sync addons/github-config-sync/rootfs/app
+
   hassfest:
     runs-on: ubuntu-latest
     steps:
