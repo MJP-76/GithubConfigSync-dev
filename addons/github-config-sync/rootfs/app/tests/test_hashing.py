@@ -26,6 +26,10 @@ class HashingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "automations.yaml").write_text("id: a", encoding="utf-8")
+            (root / "appdaemon").mkdir()
+            (root / "appdaemon" / "apps").mkdir(parents=True)
+            (root / "appdaemon" / "appdaemon.yaml").write_text("secrets: true", encoding="utf-8")
+            (root / "appdaemon" / "apps" / "lights.yaml").write_text("app: demo", encoding="utf-8")
             (root / "__pycache__").mkdir()
             (root / "__pycache__" / "x.pyc").write_bytes(b"pyc")
             (root / ".storage").mkdir()
@@ -38,6 +42,8 @@ class HashingTests(unittest.TestCase):
             index = build_hash_index(root)
 
             self.assertIn("automations.yaml", index)
+            self.assertIn("appdaemon/appdaemon.yaml", index)
+            self.assertIn("appdaemon/apps/lights.yaml", index)
             self.assertNotIn("__pycache__/x.pyc", index)
             self.assertNotIn(".storage/core.config_entries", index)
             self.assertNotIn(".cache/brands/icon.png", index)

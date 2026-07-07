@@ -2,7 +2,12 @@
 
 ## Unreleased
 
-- Preparing the v0.2.14 release bump.
+- Preparing the v0.2.15 release bump.
+
+## 0.2.15
+
+- Added explicit AppDaemon sync coverage for `/config/appdaemon/` config and apps.
+- Synced the add-on, integration, docs, and release metadata to v0.2.15.
 
 ## 0.2.14
 

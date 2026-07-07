@@ -19,10 +19,10 @@ If you find this project useful, and would like to help support its continued de
 ## Version Tracker
 
 <!-- VERSION:START -->
-- Integration version: `0.2.14`
-- Add-on version: `0.2.14`
+- Integration version: `0.2.15`
+- Add-on version: `0.2.15`
 - Channel: `stable`
-- Release tag: `v0.2.14`
+- Release tag: `v0.2.15`
 <!-- VERSION:END -->
 
 ## What it provides
@@ -38,6 +38,7 @@ If you find this project useful, and would like to help support its continued de
 
 - `server.py` is the add-on API surface and UI backend.
 - `sync/engine.py` computes the plan from the current `/config` tree and the saved hash index.
+- AppDaemon configs and apps under `/config/appdaemon/` are included in the normal sync scan.
 - `dry_run=true` stops after planning and returns the counts that would be applied.
 - `dry_run=false` probes the GitHub repository first, then performs upserts and deletes with the GitHub Contents API.
 - Live runs also write versioned snapshots under `versions/<timestamp>/...` and keep the most recent 7 by default.
