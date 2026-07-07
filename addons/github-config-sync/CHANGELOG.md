@@ -2,7 +2,12 @@
 
 ## Unreleased
 
-- Preparing the v0.2.7 release bump.
+- Preparing the v0.2.8 release bump.
+
+## 0.2.8
+
+- Added visible live upload progress cards for remaining upload/delete counts.
+- Made the recommended .gitignore and runtime status sections collapsible.
 
 ## 0.2.7
 
