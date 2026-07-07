@@ -41,9 +41,10 @@ Containerized Home Assistant add-on with an ingress web UI for GitHub sync opera
 ### Live run
 
 1. Confirm the repository is reachable with the saved token.
-2. Disable `dry_run`.
-3. Start a sync from the UI.
-4. Confirm the probe succeeds and the final result reports upserts, deletes, and skips.
+2. Confirm the branch name is correct for the target repo.
+3. Disable `dry_run`.
+4. Start a sync from the UI.
+5. Confirm the probe succeeds and the final result reports upserts, deletes, and skips.
 
 ### Diagnostics bundle
 
@@ -68,6 +69,7 @@ Containerized Home Assistant add-on with an ingress web UI for GitHub sync opera
    - `github_client_id` (defaults to the built-in app ID)
 4. Click **Start Device Login**, approve on GitHub, and wait for the login to complete automatically.
 5. Save settings and click **Run Sync Now**.
+6. Private repositories are supported, but the token must have access to the selected repo and branch.
 
 ## Notes
 

@@ -137,6 +137,9 @@
         <p style="margin-bottom: 10px">
           Connect GitHub first, then choose whether to use an existing repository or create a new one.
         </p>
+        <p style="margin: 0 0 10px; font-size: 0.9rem; color: var(--muted)">
+          Private repositories are supported. Make sure the GitHub token has access to the selected private repo and the branch name is correct.
+        </p>
         <div class="row">
           <button id="startDeviceBtn" class="secondary">Start Device Login</button>
         </div>
@@ -153,7 +156,7 @@
         </div>
         <div id="existingRepoSection" style="margin-top: 10px">
           <div class="row">
-            <input id="repoSearch" placeholder="Filter repositories..." style="flex: 1" />
+            <input id="repoSearch" placeholder="Filter repositories (including private repos)..." style="flex: 1" />
             <button id="loadReposBtn" class="secondary">Load Repositories</button>
           </div>
           <div class="field" style="margin-top: 10px">
@@ -198,6 +201,9 @@
         </div>
         <details style="margin-top: 12px">
           <summary style="cursor: pointer; color: var(--muted)">Troubleshooting options</summary>
+          <p style="margin: 8px 0 0; font-size: 0.85rem; color: var(--muted)">
+            Use the token override only if you need to test a specific GitHub token. For normal use, complete Device Login and let the app store the token.
+          </p>
           <div class="grid" style="margin-top: 10px">
             <div class="field">
               <label for="token">GitHub Token (manual override)</label>

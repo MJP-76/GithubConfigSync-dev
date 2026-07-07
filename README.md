@@ -54,9 +54,10 @@ Add-on repository metadata is provided via `repository.yaml` so it can be added 
 ### Live run
 
 1. Verify the target repository exists and is accessible with the saved token.
-2. Set `dry_run=false` in the add-on settings.
-3. Run a sync and confirm the repository probe succeeds before the write phase.
-4. Review the status panel and logs for the final upsert/delete/skip counts.
+2. Confirm the branch name is correct for the target repo.
+3. Set `dry_run=false` in the add-on settings.
+4. Run a sync and confirm the repository probe succeeds before the write phase.
+5. Review the status panel and logs for the final upsert/delete/skip counts.
 
 ### Diagnostics bundle
 
