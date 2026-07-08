@@ -34,7 +34,7 @@ Stable and RC releases are cut from the same main repository and share the same 
 To sync versions across integration/app/runtime/docs automatically:
 
 ```bash
-python3 scripts/sync_versions.py --integration 0.2.62 --addon 0.2.62 --channel stable
+python3 scripts/sync_versions.py --integration 0.3.0 --addon 0.3.0 --channel rc
 ```
 
 ## Home Assistant App (Web UI)
