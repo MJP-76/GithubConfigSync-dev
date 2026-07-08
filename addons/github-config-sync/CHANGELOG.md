@@ -4,6 +4,10 @@
 
 - Main repo is now stable-only; dev work continues in the `GithubConfigSync-dev` fork repo.
 
+## 0.2.50-dev
+
+- Confirmed the add-on UI modal close handling is inline and scope-safe.
+
 ## 0.2.49-dev
 
 - Confirm modal close handling is now inlined to avoid scope-related JS errors.
