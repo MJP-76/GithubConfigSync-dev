@@ -169,6 +169,20 @@
         border-radius: 10px;
       }
 
+      .danger {
+        border-left: 3px solid var(--err);
+        background: color-mix(in srgb, var(--err) 10%, var(--card));
+        padding: 10px 12px;
+        border-radius: 10px;
+      }
+
+      .danger {
+        border-left: 3px solid var(--err);
+        background: color-mix(in srgb, var(--err) 10%, var(--card));
+        padding: 10px 12px;
+        border-radius: 10px;
+      }
+
       .progress-grid {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -227,6 +241,13 @@
           <strong>Rebuild note:</strong> after a new release, Home Assistant may keep using a cached add-on image. If you do not see a UI change, rebuild/reinstall the add-on image and then restart the add-on.
           Remote deletes only affect GitHub and never remove local files.
           Use caution with any two-way sync or other tools that can also write to the Home Assistant config tree, because they can cause local config loss or unexpected deletions.
+          Use a private GitHub repository only; public repositories are blocked by design.
+        </div>
+        <div class="danger" style="margin-top: 12px">
+          <strong>Danger zone:</strong> Home Assistant config can contain secrets, tokens, device data, and other sensitive files. Public repositories are blocked, sensitive paths are filtered, and any two-way sync or inbound write path can put your local config at risk.
+        </div>
+        <div class="danger" style="margin-top: 12px">
+          <strong>Danger zone:</strong> Home Assistant config can contain secrets, tokens, device data, and other sensitive files. Public repositories are blocked, sensitive paths are filtered, and any two-way sync or inbound write path can put your local config at risk.
         </div>
       </div>
 
@@ -273,6 +294,9 @@
         <h2 class="section-title">GitHub Device Login</h2>
         <p class="subtle" style="margin-bottom: 10px">
           Private repositories are supported. Make sure the GitHub token has access to the selected private repo and the branch name is correct.
+        </p>
+        <p class="subtle" style="margin-bottom: 10px; color: var(--err)">
+          Danger zone: never use a public repo here, and do not combine this with any other tool that writes back into your Home Assistant config tree.
         </p>
         <div class="row">
           <button id="startDeviceBtn" class="secondary">Start Device Login</button>
@@ -321,6 +345,13 @@
 
       <div class="card">
         <div class="grid">
+          <div class="field">
+            <label for="releaseChannel">Release Channel</label>
+            <select id="releaseChannel">
+              <option value="stable">Stable</option>
+              <option value="dev">Dev</option>
+            </select>
+          </div>
           <div class="field">
             <label for="repo">Selected Repository (owner/repo)</label>
             <input id="repo" placeholder="MJP-76/GithubConfigSync" />
@@ -372,9 +403,19 @@
         <div class="row" style="margin-top: 14px">
           <button id="saveBtn">Save Settings</button>
           <button id="syncBtn" class="secondary">Run Sync Now</button>
-          <button id="cleanSyncBtn" class="secondary">Clean Upload</button>
           <button id="cancelSyncBtn" class="secondary">Cancel Current Upload</button>
           <button id="refreshBtn" class="secondary">Refresh Status</button>
+        </div>
+      </div>
+
+      <div class="card danger">
+        <h2 class="section-title">Danger zone</h2>
+        <p class="subtle" style="margin-bottom: 10px">
+          Destructive actions live here. Clean Upload rebuilds the remote repo from the current local config, and Clean Repo Skeleton clears the live repo back to a bare starter state for fresh uploads.
+        </p>
+        <div class="row">
+          <button id="cleanSyncBtn">Clean Upload</button>
+          <button id="cleanRepoBtn" class="secondary">Clean Repo Skeleton</button>
         </div>
       </div>
 
@@ -408,6 +449,7 @@
       const el = {
         status: document.getElementById("status"),
         repo: document.getElementById("repo"),
+        releaseChannel: document.getElementById("releaseChannel"),
         branch: document.getElementById("branch"),
         token: document.getElementById("token"),
         clientId: document.getElementById("clientId"),
@@ -440,6 +482,7 @@
         createRepoBtn: document.getElementById("createRepoBtn"),
         syncBtn: document.getElementById("syncBtn"),
         cleanSyncBtn: document.getElementById("cleanSyncBtn"),
+        cleanRepoBtn: document.getElementById("cleanRepoBtn"),
         refreshBtn: document.getElementById("refreshBtn"),
         downloadDiagnosticsBtn: document.getElementById("downloadDiagnosticsBtn"),
         cancelSyncBtn: document.getElementById("cancelSyncBtn"),
@@ -555,6 +598,7 @@
       async function loadOptions() {
         const data = await fetchJson(apiUrl("/api/options"));
         el.repo.value = data.github_repository || "";
+        el.releaseChannel.value = data.release_channel || "stable";
         el.branch.value = data.github_branch || "main";
         el.token.value = "";
         el.clientId.value = data.github_client_id || "";
@@ -626,6 +670,7 @@
           JSON.stringify({ state: data.state, auth: data.auth, token_health: data.token_health }, null, 2) +
           "\n\n" +
           (data.log_tail || "");
+        setStatus(`Channel: ${data.release_channel || "stable"} | ${data.state?.status || "idle"}`, data.state?.status !== "error");
       }
 
       function startStatusPolling() {
@@ -688,6 +733,7 @@
         try {
           const payload = {
             github_repository: el.repo.value.trim(),
+            release_channel: el.releaseChannel.value,
             github_branch: el.branch.value.trim() || "main",
             github_token: el.token.value.trim(),
             github_client_id: el.clientId.value.trim(),
@@ -798,6 +844,9 @@
         runSync().catch((error) => setStatus(error.message, false))
       );
       el.cleanSyncBtn.addEventListener("click", () =>
+        runCleanSync().catch((error) => setStatus(error.message, false))
+      );
+      el.cleanRepoBtn.addEventListener("click", () =>
         runCleanSync().catch((error) => setStatus(error.message, false))
       );
       el.cancelSyncBtn.addEventListener("click", () =>

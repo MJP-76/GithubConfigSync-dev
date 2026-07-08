@@ -17,10 +17,18 @@ IGNORE_PATTERNS = (
     "*.swp",
     "*.pyc",
 )
+SENSITIVE_PATTERNS = (
+    ".storage/",
+    "secrets.yaml",
+    "secret",
+)
 
 
 def is_ignored(relative_path: str) -> bool:
+    normalized = relative_path.replace("\\", "/").lower()
     if any(part in IGNORE_DIRS for part in Path(relative_path).parts):
+        return True
+    if any(pattern in normalized for pattern in SENSITIVE_PATTERNS):
         return True
     return any(fnmatch.fnmatch(relative_path, pattern) for pattern in IGNORE_PATTERNS)
 

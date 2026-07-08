@@ -8,7 +8,7 @@
 [![Manifest](https://img.shields.io/badge/Manifest-validated-success.svg)](https://developers.home-assistant.io/docs/creating_integration_manifest/)
 [![Release](https://img.shields.io/github/v/tag/MJP-76/GithubConfigSync?label=release)](https://github.com/MJP-76/GithubConfigSync/releases)
 
-Home Assistant custom integration for syncing the Home Assistant config folder to GitHub. This is a config sync tool, not a backup tool. Use caution with any two-way sync or other tools that can also write to the Home Assistant config tree, because they can cause local config loss or unexpected deletions.
+Home Assistant custom integration for syncing the Home Assistant config folder to GitHub. This is a config sync tool, not a backup tool. **Use a private GitHub repository only.** Use caution with any two-way sync or other tools that can also write to the Home Assistant config tree, because they can cause local config loss or unexpected deletions.
 
 This documentation and code were drafted with AI assistance and then reviewed/edited by the maintainer.
 
@@ -23,10 +23,10 @@ If you find this project useful, and would like to help support its continued de
 ## Version Tracker
 
 <!-- VERSION:START -->
-- Integration version: `0.2.35`
-- App version: `0.2.35`
+- Integration version: `0.2.36`
+- App version: `0.2.36`
 - Channel: `stable`
-- Release tag: `v0.2.35`
+- Release tag: `v0.2.36`
 <!-- VERSION:END -->
 
 To sync versions across integration/app/runtime/docs automatically:
@@ -48,12 +48,14 @@ This repository now also includes a containerized Home Assistant app with ingres
 `addons/github-config-sync/`
 
 App repository metadata is provided via `repository.yaml` so it can be added directly in Home Assistant Add-on Store.
+Security hardening is part of the current release: private repos only, sensitive-path filtering, and two-way sync warnings.
 
 ## Sync defaults
 
 - Runs once a day by default.
 - Keeps 7 GitHub version snapshots by default.
 - Both values are configurable in the app UI.
+- The app UI also lets users choose the stable or dev release channel.
 
 ## Architecture
 
@@ -63,6 +65,7 @@ App repository metadata is provided via `repository.yaml` so it can be added dir
 - AppDaemon configs and apps under `/addon_configs/` are included in the normal sync scan.
 - The mount-point checklist lets you include or exclude standard Home Assistant folders, and the recommended .gitignore keeps the ignore list aligned.
 - Dry runs do not touch GitHub; live runs probe the repository first, then upsert and delete files through the GitHub Contents API. Remote deletes never remove local files.
+- Public repositories are blocked by design; repository creation is forced private.
 - Live runs also write versioned snapshots under `versions/<timestamp>/...` and keep the most recent 7 by default.
 - State, logs, device-flow data, and the last hash index live in `/data`.
 - The app exposes a stable local API contract via `/api/health`, `/api/status`, `/api/sync`, and `/api/diagnostics`.

@@ -6,7 +6,7 @@
 [![HASSfest](https://img.shields.io/badge/HASSfest-validated-success.svg)](https://developers.home-assistant.io/docs/add-ons/)
 [![Release](https://img.shields.io/github/v/tag/MJP-76/GithubConfigSync?label=release)](https://github.com/MJP-76/GithubConfigSync/releases)
 
-Containerized Home Assistant app with an ingress web UI for GitHub config sync operations. This is a sync tool, not a backup tool. Use caution with any two-way sync or other tools that can also write to the Home Assistant config tree, because they can cause local config loss or unexpected deletions.
+Containerized Home Assistant app with an ingress web UI for GitHub config sync operations. This is a sync tool, not a backup tool. **Use a private GitHub repository only.** Use caution with any two-way sync or other tools that can also write to the Home Assistant config tree, because they can cause local config loss or unexpected deletions.
 
 This documentation and code were drafted with AI assistance and then reviewed/edited by the maintainer.
 
@@ -21,10 +21,10 @@ If you find this project useful, and would like to help support its continued de
 ## Version Tracker
 
 <!-- VERSION:START -->
-- Integration version: `0.2.35`
-- App version: `0.2.35`
+- Integration version: `0.2.36`
+- App version: `0.2.36`
 - Channel: `stable`
-- Release tag: `v0.2.35`
+- Release tag: `v0.2.36`
 <!-- VERSION:END -->
 
 ## What it provides
@@ -44,6 +44,7 @@ If you find this project useful, and would like to help support its continued de
 - The mount-point checklist lets you include or exclude standard Home Assistant folders, and the recommended .gitignore keeps the ignore list aligned.
 - `dry_run=true` stops after planning and returns the counts that would be applied.
 - `dry_run=false` probes the GitHub repository first, then performs upserts and deletes with the GitHub Contents API. Remote deletes never remove local files.
+- Public repositories are blocked by design; repository creation is forced private.
 - Live runs also write versioned snapshots under `versions/<timestamp>/...` and keep the most recent 7 by default.
 - Runtime state is persisted in `/data/state.json`, `/data/hash_index.json`, `/data/device_flow.json`, and `/data/sync.log`.
 - The stable local API contract is `/api/health`, `/api/status`, `/api/sync`, and `/api/diagnostics`.
@@ -101,6 +102,9 @@ If you find this project useful, and would like to help support its continued de
 
 - `dry_run` is enabled by default to avoid accidental pushes.
 - This app is designed as a polished operator UI layer and can be wired to deeper sync logic incrementally.
+- Security-focused safeguards are in place: private repositories only, sensitive-path filtering, and two-way sync warnings.
+- The latest release includes the danger-zone security updates in the changelog.
+- The UI lets users choose the stable or dev release channel.
 - The add-on repository metadata is minimal and valid for Home Assistant add-on store ingestion.
 - Version snapshots now skip ignored directories like `.cache`, even inside release snapshots.
 - New repository creation defaults blank name/description fields to a humanized repository name.

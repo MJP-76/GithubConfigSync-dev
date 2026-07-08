@@ -49,6 +49,20 @@ class HashingTests(unittest.TestCase):
             self.assertNotIn(".cache/brands/icon.png", index)
             self.assertNotIn("home-assistant.log", index)
 
+    def test_build_hash_index_ignores_sensitive_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "secrets.yaml").write_text("token: hidden", encoding="utf-8")
+            (root / "my-secret-notes.yaml").write_text("token: hidden", encoding="utf-8")
+            (root / ".storage").mkdir()
+            (root / ".storage" / "core.config").write_text("{}", encoding="utf-8")
+
+            index = build_hash_index(root)
+
+            self.assertNotIn("secrets.yaml", index)
+            self.assertNotIn("my-secret-notes.yaml", index)
+            self.assertNotIn(".storage/core.config", index)
+
     def test_default_ignore_patterns_cover_common_home_assistant_files(self) -> None:
         self.assertIn("secrets.yaml", DEFAULT_IGNORE_PATTERNS)
         self.assertIn("ip_bans.yaml", DEFAULT_IGNORE_PATTERNS)

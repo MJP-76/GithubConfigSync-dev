@@ -2,12 +2,18 @@
 
 ## Unreleased
 
-- Preparing the v0.2.35 release bump.
+- Preparing the v0.2.36 release bump.
+
+## 0.2.36
+
+- Added the stable/dev release channel selector to the UI and backend settings.
+- Continued the security-focused UI and docs updates.
 
 ## 0.2.35
 
 - Added the remote-delete/local-file caution to the docs and app page.
 - Clarified that clean upload deletes only remote GitHub content.
+- Added danger-zone security updates: private repos only, sensitive-path filtering, and two-way sync warnings.
 
 ## 0.2.20
 

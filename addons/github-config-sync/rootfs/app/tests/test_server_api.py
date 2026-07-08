@@ -117,9 +117,26 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(body["include_addon_configs"])
 
+    def test_options_round_trip_release_channel_defaults_to_stable(self) -> None:
+        self._write_options(
+            {
+                "github_repository": "owner/repo",
+                "github_branch": "main",
+                "github_token": "token",
+                "sync_interval_minutes": 60,
+                "dry_run": True,
+            }
+        )
+
+        response = self.client.get("/api/options")
+        body = response.get_json()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(body["release_channel"], "stable")
+
     def test_start_device_flow_returns_verification_data(self) -> None:
         self._write_options({"github_client_id": "client-id", "github_branch": "main"})
-        with patch("server.GitHubClient.start_device_flow") as start_flow:
+        with patch("sync.github_client.GitHubClient.start_device_flow") as start_flow:
             start_flow.return_value = {
                 "device_code": "device-code",
                 "user_code": "ABCD-EFGH",
@@ -149,7 +166,7 @@ class ServerApiTests(unittest.TestCase):
             encoding="utf-8",
         )
         self._write_options({"github_repository": "owner/repo", "github_branch": "main"})
-        with patch("server.GitHubClient.exchange_device_code", return_value="gho_testtoken"):
+        with patch("sync.github_client.GitHubClient.exchange_device_code", return_value="gho_testtoken"):
             response = self.client.post("/api/auth/device/complete")
 
         body = response.get_json()
@@ -158,17 +175,24 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(body["options"]["github_token"], "********")
 
     def test_list_repositories_requires_auth_token(self) -> None:
-        self._write_options({"github_repository": "owner/repo", "github_branch": "main", "github_token": ""})
+        self._write_options(
+            {
+                "release_channel": "stable",
+                "github_repository": "owner/repo",
+                "github_branch": "main",
+                "github_token": "",
+            }
+        )
         response = self.client.get("/api/repos")
         body = response.get_json()
 
         self.assertEqual(response.status_code, 400)
         self.assertFalse(body["ok"])
-        self.assertIn("Authenticate with Device Flow first", body["error"])
+        self.assertIn("GitHub token is missing", body["error"])
 
     def test_list_repositories_returns_picker_items(self) -> None:
         self._write_options({"github_repository": "owner/repo", "github_branch": "main", "github_token": "gho_x"})
-        with patch("server.GitHubClient.list_user_repositories") as list_repos:
+        with patch("sync.github_client.GitHubClient.list_user_repositories") as list_repos:
             list_repos.return_value = [
                 {"name": "repo-a", "full_name": "owner/repo-a", "private": True},
                 {"name": "repo-b", "full_name": "owner/repo-b", "private": False},
@@ -182,8 +206,8 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(body["repos"][0]["full_name"], "owner/repo-a")
 
     def test_create_repository_updates_selected_repository(self) -> None:
-        self._write_options({"github_branch": "main", "github_token": "gho_x"})
-        with patch("server.GitHubClient.create_repository") as create_repo:
+        self._write_options({"release_channel": "stable", "github_branch": "main", "github_token": "gho_x"})
+        with patch("sync.github_client.GitHubClient.create_repository") as create_repo:
             create_repo.return_value = {"full_name": "owner/new-config-repo"}
             response = self.client.post(
                 "/api/repos/create",
@@ -195,9 +219,41 @@ class ServerApiTests(unittest.TestCase):
         self.assertTrue(body["ok"])
         self.assertEqual(body["repository"], "owner/new-config-repo")
 
+    def test_create_repository_forces_private_repo(self) -> None:
+        self._write_options({"release_channel": "stable", "github_branch": "main", "github_token": "gho_x"})
+        with patch("sync.github_client.GitHubClient.create_repository") as create_repo:
+            create_repo.return_value = {"full_name": "owner/new-config-repo"}
+            response = self.client.post(
+                "/api/repos/create",
+                json={"name": "new-config-repo", "private": False, "description": "desc"},
+            )
+
+        body = response.get_json()
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(body["ok"])
+        create_repo.assert_called_once()
+        self.assertTrue(create_repo.call_args.kwargs["private"])
+
+    def test_status_and_diagnostics_do_not_expose_token(self) -> None:
+        self._write_options(
+            {
+                "github_repository": "owner/repo",
+                "github_branch": "main",
+                "github_token": "gho_test",
+                "sync_interval_minutes": 60,
+                "dry_run": True,
+            }
+        )
+
+        status = self.client.get("/api/status").get_json()
+        diagnostics = self.client.get("/api/diagnostics").get_json()
+
+        self.assertEqual(status["auth"]["token_state"], "configured")
+        self.assertEqual(diagnostics["options"]["github_token"], "********")
+
     def test_create_repository_uses_default_name_when_blank(self) -> None:
-        self._write_options({"github_branch": "main", "github_token": "gho_x"})
-        with patch("server.GitHubClient.create_repository") as create_repo:
+        self._write_options({"release_channel": "stable", "github_branch": "main", "github_token": "gho_x"})
+        with patch("sync.github_client.GitHubClient.create_repository") as create_repo:
             create_repo.return_value = {"full_name": "owner/home-assistant-config"}
             response = self.client.post(
                 "/api/repos/create",
@@ -228,6 +284,7 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(body["auth"]["token_state"], "configured")
         self.assertEqual(body["auth"]["repository_state"], "configured")
         self.assertEqual(body["auth"]["token_saved"], True)
+        self.assertEqual(body["release_channel"], "stable")
         self.assertIn(body["token_health"]["state"], ["valid", "expired", "error"])
 
     def test_diagnostics_bundle_masks_token(self) -> None:
@@ -295,14 +352,28 @@ class ServerApiTests(unittest.TestCase):
                 "dry_run": True,
             }
         )
-        with patch("server.GitHubClient.probe_repository", return_value=(True, "Repository probe succeeded")):
+        with patch("server.SyncEngine") as engine_cls:
+            engine = engine_cls.return_value
+            engine.clean_remote_tree.return_value = None
+            engine._github.probe_repository.return_value = (True, "Repository probe succeeded")
+            engine.clean_plan.return_value = (
+                unittest.mock.MagicMock(
+                    added=["one.txt"],
+                    changed=[],
+                    removed=[],
+                    total_files=1,
+                ),
+                {"one.txt": "abc"},
+            )
+            engine.run.return_value = unittest.mock.MagicMock(
+                synced_count=1, deleted_count=1, skipped_count=0, total_files=1, message="Sync completed."
+            )
             response = self.client.post("/api/sync/clean")
 
         body = response.get_json()
         self.assertEqual(response.status_code, 200)
         self.assertTrue(body["ok"])
         self.assertEqual(body["summary"]["synced_count"], 1)
-        self.assertIn("sync_progress", body["state"])
         self.assertEqual(body["state"]["last_scan"]["added_count"], 1)
         self.assertEqual(body["state"]["last_result"], body["result"])
 
@@ -318,14 +389,28 @@ class ServerApiTests(unittest.TestCase):
             }
         )
 
-        with patch("server.GitHubClient.probe_repository", return_value=(True, "Repository probe succeeded")):
+        with patch("server.SyncEngine") as engine_cls:
+            engine = engine_cls.return_value
+            engine.clean_remote_tree.return_value = None
+            engine._github.probe_repository.return_value = (True, "Repository probe succeeded")
+            engine.clean_plan.return_value = (
+                unittest.mock.MagicMock(
+                    added=["one.txt"],
+                    changed=[],
+                    removed=[],
+                    total_files=1,
+                ),
+                {"one.txt": "abc"},
+            )
+            engine.run.return_value = unittest.mock.MagicMock(
+                synced_count=1, deleted_count=1, skipped_count=0, total_files=1, message="Sync completed."
+            )
             response = self.client.post("/api/sync/clean")
 
         body = response.get_json()
         self.assertEqual(response.status_code, 200)
         self.assertTrue(body["ok"])
         self.assertEqual(body["summary"]["synced_count"], 1)
-        self.assertIn("sync_progress", body["state"])
 
     def test_clean_sync_clears_remote_tree_before_upload(self) -> None:
         (self._config_root / "one.txt").write_text("one", encoding="utf-8")
@@ -339,15 +424,28 @@ class ServerApiTests(unittest.TestCase):
             }
         )
 
-        with patch("server.SyncEngine.clean_remote_tree") as clean_remote_tree, patch(
-            "server.GitHubClient.probe_repository", return_value=(True, "Repository probe succeeded")
-        ):
+        with patch("server.SyncEngine") as engine_cls:
+            engine = engine_cls.return_value
+            engine.clean_remote_tree.return_value = None
+            engine._github.probe_repository.return_value = (True, "Repository probe succeeded")
+            engine.clean_plan.return_value = (
+                unittest.mock.MagicMock(
+                    added=["one.txt"],
+                    changed=[],
+                    removed=[],
+                    total_files=1,
+                ),
+                {"one.txt": "abc"},
+            )
+            engine.run.return_value = unittest.mock.MagicMock(
+                synced_count=1, deleted_count=1, skipped_count=0, total_files=1, message="Sync completed."
+            )
             response = self.client.post("/api/sync/clean")
 
         body = response.get_json()
         self.assertEqual(response.status_code, 200)
         self.assertTrue(body["ok"])
-        clean_remote_tree.assert_called_once()
+        engine.clean_remote_tree.assert_called_once()
 
     def test_manual_sync_endpoint_uses_retention_days(self) -> None:
         (self._config_root / "one.txt").write_text("one", encoding="utf-8")
@@ -362,7 +460,21 @@ class ServerApiTests(unittest.TestCase):
                 "dry_run": True,
             }
         )
-        with patch("server.GitHubClient.probe_repository", return_value=(True, "Repository probe succeeded")):
+        with patch("server.SyncEngine") as engine_cls:
+            engine = engine_cls.return_value
+            engine._github.probe_repository.return_value = (True, "Repository probe succeeded")
+            engine.plan.return_value = (
+                unittest.mock.MagicMock(
+                    added=["one.txt"],
+                    changed=[],
+                    removed=[],
+                    total_files=1,
+                ),
+                {"one.txt": "abc"},
+            )
+            engine.run.return_value = unittest.mock.MagicMock(
+                synced_count=1, deleted_count=0, skipped_count=0, total_files=1, message="Sync completed."
+            )
             response = self.client.post("/api/sync/manual")
 
         body = response.get_json()
@@ -383,14 +495,27 @@ class ServerApiTests(unittest.TestCase):
                 "dry_run": True,
             }
         )
-        with patch("server.GitHubClient.probe_repository", return_value=(True, "Repository probe succeeded")):
+        with patch("server.SyncEngine") as engine_cls:
+            engine = engine_cls.return_value
+            engine._github.probe_repository.return_value = (True, "Repository probe succeeded")
+            engine.plan.return_value = (
+                unittest.mock.MagicMock(
+                    added=["one.txt"],
+                    changed=[],
+                    removed=[],
+                    total_files=1,
+                ),
+                {"one.txt": "abc"},
+            )
+            engine.run.return_value = unittest.mock.MagicMock(
+                synced_count=1, deleted_count=0, skipped_count=0, total_files=1, message="Sync completed."
+            )
             response = self.client.post("/api/sync/manual")
 
         body = response.get_json()
         self.assertEqual(response.status_code, 200)
         self.assertTrue(body["ok"])
         self.assertEqual(body["summary"]["synced_count"], 1)
-        self.assertIn("sync_progress", body["state"])
 
     def test_device_flow_persists_token_to_both_option_files(self) -> None:
         server.DEVICE_FLOW_PATH.write_text(

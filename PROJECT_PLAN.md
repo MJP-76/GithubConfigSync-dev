@@ -6,18 +6,18 @@ Use this as the single source of truth for **where we are**, **what is next**, a
 
 ## Status Snapshot
 
-- **Current milestone:** `v0.2.35 — Release sync`
+- **Current milestone:** `v0.2.36 — Stable/dev split`
 - **Last updated:** 2026-07-08
 - **Track:** Home Assistant Integration + Home Assistant Add-on (Ingress Web UI)
-- **Latest shipped improvements:** rolled back the temporary github_sync_app app-path refactor
+- **Latest shipped improvements:** added danger-zone security hardening (private repos only, sensitive-path filtering, two-way sync warnings)
 - **Current operator UX:** Device Login section first, existing/create repo flow, troubleshooting auth overrides hidden by default
 - **Version state:** Synced to the current release below.
 
 <!-- VERSION:START -->
-- Integration version: `0.2.35`
-- Add-on version: `0.2.35`
+- Integration version: `0.2.36`
+- Add-on version: `0.2.36`
 - Channel: `stable`
-- Release tag: `v0.2.35`
+- Release tag: `v0.2.36`
 <!-- VERSION:END -->
 
 ---
@@ -76,6 +76,14 @@ Use this as the single source of truth for **where we are**, **what is next**, a
 - [x] Published iterative stable releases through `v0.0.23` (add-on `0.1.6`).
 - [x] Added/used automated version sync script across integration/add-on/docs.
 - [x] Added this in-repo tracker as the canonical cross-device status document.
+
+### Security focused
+
+- [x] Forced private GitHub repository creation.
+- [x] Added warnings against public repositories and two-way sync risk.
+- [x] Added a hard filter for obvious sensitive Home Assistant files and paths.
+- [x] Documented that remote deletes do not remove local files.
+- [ ] Review whether any additional secret-scanning or blocklist patterns should be added later.
 
 ---
 
