@@ -912,7 +912,14 @@
         setButtonBusy(el.syncBtn, true, "Running...");
         try {
           const data = await fetchJson(apiUrl("/api/sync/manual"), { method: "POST" });
-          setStatus(data.result || "Sync completed");
+          if (data.summary) {
+            setStatus(
+              `${data.result || "Sync completed"} (${data.summary.added_count + data.summary.changed_count} upserts, ${data.summary.removed_count} deletes)`,
+              true
+            );
+          } else {
+            setStatus(data.result || "Sync completed");
+          }
           await loadStatus();
         } finally {
           setButtonBusy(el.syncBtn, false);

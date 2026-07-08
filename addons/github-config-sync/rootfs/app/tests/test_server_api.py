@@ -97,7 +97,9 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(body["ok"])
         self.assertIn("Dry run completed", body["result"])
+        self.assertIn("Would upsert", body["result"])
         self.assertEqual(body["summary"]["synced_count"], 1)
+        self.assertEqual(body["summary"]["deleted_count"], 0)
 
     def test_options_round_trip_include_addon_configs_default_true(self) -> None:
         self._write_options(
@@ -250,7 +252,7 @@ class ServerApiTests(unittest.TestCase):
 
         self.assertEqual(status["auth"]["token_state"], "configured")
         self.assertEqual(status["repo_versions"]["stable"], "0.2.39")
-        self.assertEqual(status["repo_versions"]["dev"], "0.2.61")
+        self.assertEqual(status["repo_versions"]["dev"], "0.2.62")
         self.assertEqual(diagnostics["options"]["github_token"], "********")
 
     def test_create_repository_uses_default_name_when_blank(self) -> None:
@@ -505,7 +507,7 @@ class ServerApiTests(unittest.TestCase):
         body = response.get_json()
         self.assertEqual(response.status_code, 200)
         self.assertTrue(body["ok"])
-        self.assertEqual(body["result"], "Dry run completed. No remote changes were made.")
+        self.assertIn("Would upsert", body["result"])
 
     def test_manual_sync_respects_dry_run_mode(self) -> None:
         (self._config_root / "one.txt").write_text("one", encoding="utf-8")
@@ -522,13 +524,22 @@ class ServerApiTests(unittest.TestCase):
         )
         with patch("server.SyncEngine") as engine_cls:
             engine = engine_cls.return_value
+            engine.plan.return_value = (
+                unittest.mock.MagicMock(
+                    added=["one.txt"],
+                    changed=[],
+                    removed=[],
+                    total_files=1,
+                ),
+                {"one.txt": "abc"},
+            )
             response = self.client.post("/api/sync/manual")
 
         body = response.get_json()
         self.assertEqual(response.status_code, 200)
         self.assertTrue(body["ok"])
-        self.assertEqual(body["result"], "Dry run completed. No remote changes were made.")
-        engine.plan.assert_not_called()
+        self.assertIn("Would upsert", body["result"])
+        engine.plan.assert_called_once()
 
     def test_device_flow_persists_token_to_both_option_files(self) -> None:
         server.DEVICE_FLOW_PATH.write_text(

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Manual sync dry run now shows the would-upsert/would-delete summary in the UI.
+
+## 0.2.62
+
+- Manual sync dry run now shows the would-upsert/would-delete summary in the UI.
+
 - Make Clean Repo use a single git commit/ref update instead of recursive file-by-file deletes.
 
 ## 0.2.61

@@ -14,7 +14,7 @@ from sync.errors import SyncError
 from sync.github_client import GitHubClient
 from sync.hashing import IGNORE_PATTERNS
 
-APP_VERSION = "0.2.61"
+APP_VERSION = "0.2.62"
 STABLE_REPO_VERSION = "0.2.39"
 RC_REPO_VERSION = "0.2.52"
 DEV_REPO_VERSION = APP_VERSION
@@ -368,9 +368,28 @@ def trigger_manual_sync():
     if not sync_config.repository:
         return jsonify({"ok": False, "error": "github_repository is required"}), 400
     if sync_config.dry_run:
+        engine = SyncEngine(sync_config, previous_hash_index=_load_json(HASH_INDEX_PATH, {}))
+        plan, _ = engine.plan()
+        scan = _plan_summary(plan)
         started = dt.datetime.now(dt.timezone.utc).isoformat()
-        _save_state({"status": "ok", "last_run": started, "last_error": None, "last_result": "Dry run completed. No remote changes were made."})
-        return jsonify({"ok": True, "result": "Dry run completed. No remote changes were made.", "state": _load_state()})
+        result_message = (
+            "Dry run completed. "
+            f"Would upsert {scan['added_count'] + scan['changed_count']} files and delete {scan['removed_count']} files."
+        )
+        _save_state({"status": "ok", "last_run": started, "last_error": None, "last_result": result_message, "last_scan": scan})
+        return jsonify(
+            {
+                "ok": True,
+                "result": result_message,
+                "summary": {
+                    **scan,
+                    "synced_count": scan["added_count"] + scan["changed_count"],
+                    "deleted_count": scan["removed_count"],
+                    "skipped_count": 0,
+                },
+                "state": _load_state(),
+            }
+        )
 
     started = dt.datetime.now(dt.timezone.utc).isoformat()
     _save_state({"status": "running", "last_run": started, "last_error": None})
@@ -424,6 +443,7 @@ def trigger_manual_sync():
             "ok": True,
             "result": result.message,
             "summary": {
+                **scan,
                 "synced_count": result.synced_count,
                 "deleted_count": result.deleted_count,
                 "skipped_count": result.skipped_count,
