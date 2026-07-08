@@ -4,6 +4,10 @@
 
 - Main repo is now stable-only; numeric sequential release wording now replaces the old stable/dev phrasing.
 
+## 0.2.55
+
+- Force a fresh dev image pull for the Clean Repo skeleton restore path.
+
 ## 0.2.54
 
 - Fixed Clean Repo so it always performs the live wipe-and-restore flow.
