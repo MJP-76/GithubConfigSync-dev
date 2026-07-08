@@ -2,25 +2,115 @@
 
 ## Unreleased
 
-- Preparing the v0.2.39 release bump.
+- Manual sync dry run now shows the would-upsert/would-delete summary in the UI.
 
+## 0.2.62
+
+- Manual sync dry run now shows the would-upsert/would-delete summary in the UI.
+
+- Make Clean Repo use a single git commit/ref update instead of recursive file-by-file deletes.
+
+## 0.2.61
+
+- Make Clean Repo use a single git commit/ref update instead of recursive file-by-file deletes.
+
+- Add debounced autosave in the web UI so settings persist without manual Save clicks.
+
+## 0.2.60
+
+- Add debounced autosave in the web UI so settings persist without manual Save clicks.
+
+- Clean Upload now always runs live too, matching Clean Repo.
+
+## 0.2.59
+
+- Clean Upload now always runs live too, matching Clean Repo.
+
+- Quiet Flask/Werkzeug access logs so repeated status polling does not flood the add-on log.
+
+## 0.2.58
+
+- Quiet Flask/Werkzeug access logs so repeated status polling does not flood the add-on log.
+
+- Bundle the starter README and repository.yaml inside the add-on image so Clean Repo can restore them.
+
+## 0.2.57
+
+- Bundle the starter README and repository.yaml inside the add-on image so Clean Repo can restore them.
+
+- Force a fresh add-on release to pick up the cleaned repo restore path in Home Assistant.
+
+## 0.2.56
+
+- Force a fresh add-on release to pick up the cleaned repo restore path in Home Assistant.
+
+- Main repo is now stable-only; numeric sequential release wording now replaces the old stable/dev phrasing.
+
+## 0.2.55
+
+- Force a fresh dev image pull for the Clean Repo skeleton restore path.
+
+## 0.2.54
+
+- Fixed Clean Repo so it always performs the live wipe-and-restore flow.
+
+## 0.2.53
+
+- Clean Repo now ignores dry run and always performs the wipe+restore flow.
+- Recombined Clean Repo and skeleton restore into one flow.
+
+## 0.2.52
+
+- Added a scheduled-sync override checkbox so automated runs can ignore dry run while manual actions stay preview-only.
+- Clean Repo now performs a true wipe and restores the starter skeleton in one process.
+
+## 0.2.51-dev
+
+- Replaced the custom confirmation modal with native browser confirms to avoid add-on UI runtime errors.
+
+## 0.2.50-dev
+
+- Confirmed the add-on UI modal close handling is inline and scope-safe.
+
+## 0.2.49-dev
+
+- Confirm modal close handling is now inlined to avoid scope-related JS errors.
+
+## 0.2.48-dev
+
+- Fixed the remaining modal close handler scope issue in the add-on UI.
+
+## 0.2.47-dev
+
+- Removed remaining modern JavaScript syntax from the add-on UI so older Home Assistant webviews can initialize it.
+
+## 0.2.46-dev
+
+- Switched the add-on UI to older-browser-compatible JavaScript so the page can initialize correctly in Home Assistant.
+
+## 0.2.45-dev
+
+- Fixed the add-on UI initialization bug caused by the confirmation modal helper nesting.
+
+## 0.2.44-dev
+
+- Added confirmation prompts for Clean Upload and Clean Repo Skeleton, and removed the in-UI release suggestion notice.
+
+## 0.2.43-dev
+
+- Added a separate Cancel Process button in the danger zone for stopping the current job.
 ## 0.2.39
 
-- Synced the stable and dev branches around the app header release metadata and the clarified target repository wording.
+- Stable release baseline for the main repository.
 
-## 0.2.38
+## 0.2.40-dev
 
-- Restored the stable/dev selector in the app UI and persisted it in add-on settings.
-- Kept the release workflow aligned with the stable release line on `main`.
-
-## 0.2.37
-
-- Moved release-channel control out of the app page and back into release metadata/tracking.
-- Kept the app focused on config sync, snapshots, and danger-zone safeguards.
+- Moved the danger-zone warning into the repo setup section and made the danger wording consistently bold red.
+- Added app/header release metadata improvements for dev testing.
 
 ## 0.2.36
 
-- Added the stable/dev release channel selector to the UI and backend settings.
+- Added the `x`/`y`/`z` release-track selector wording to the UI and backend settings.
 - Continued the security-focused UI and docs updates.
 
 ## 0.2.35

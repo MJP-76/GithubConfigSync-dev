@@ -1,6 +1,6 @@
 name: "Github Config Sync"
-description: "Home Assistant app for GitHub config sync operations, not backups. Public repositories are blocked by design; use a private repo only."
-version: "0.2.39"
+description: "Home Assistant app for GitHub config sync operations, not backups. Release v0.2.62. Public repositories are blocked by design; use a private repo only."
+version: "0.3.0"
 slug: "github_config_sync_web"
 url: "https://github.com/MJP-76/GithubConfigSync"
 init: false
@@ -31,7 +31,6 @@ ports_description:
 options:
   github_repository: ""
   github_branch: "main"
-  release_channel: "stable"
   github_token: ""
   sync_interval_minutes: 1440
   version_retention_count: 7
@@ -45,7 +44,6 @@ options:
 schema:
   github_repository: str?
   github_branch: str
-  release_channel: list(stable|dev)
   github_token: password?
   sync_interval_minutes: int(5,1440)
   version_retention_count: int(1,100)

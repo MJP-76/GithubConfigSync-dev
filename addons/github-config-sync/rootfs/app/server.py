@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import logging
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote
@@ -13,7 +14,10 @@ from sync.errors import SyncError
 from sync.github_client import GitHubClient
 from sync.hashing import IGNORE_PATTERNS
 
-APP_VERSION = "0.2.39"
+APP_VERSION = "0.3.0"
+STABLE_REPO_VERSION = "0.2.39"
+RC_REPO_VERSION = "0.2.52"
+DEV_REPO_VERSION = APP_VERSION
 APP_PORT = 8099
 DEFAULT_OAUTH_CLIENT_ID = "Ov23li2ycCraodta6WCU"
 
@@ -27,16 +31,19 @@ DEVICE_FLOW_PATH = DATA_DIR / "device_flow.json"
 STATIC_DIR = Path("/app/static")
 CONFIG_ROOT = Path("/config")
 
+logging.getLogger("werkzeug").setLevel(logging.ERROR)
+
 DEFAULT_OPTIONS: dict[str, Any] = {
+    "auth_method": "device_flow",
     "github_repository": "",
     "github_branch": "main",
-    "release_channel": "stable",
     "github_token": "",
     "github_client_id": DEFAULT_OAUTH_CLIENT_ID,
     "sync_interval_minutes": 1440,
     "version_retention_count": 7,
     "manual_version_retention_days": 7,
     "dry_run": True,
+    "scheduled_live_sync": False,
     "include_addon_configs": True,
     "include_media": False,
     "include_share": False,
@@ -123,10 +130,6 @@ def _validate_payload(payload: dict[str, Any]) -> tuple[bool, str | None]:
     if not branch:
         return False, "github_branch is required"
 
-    release_channel = str(payload.get("release_channel", "")).strip()
-    if release_channel not in {"stable", "dev"}:
-        return False, "release_channel must be stable or dev"
-
     interval_raw = payload.get("sync_interval_minutes")
     try:
         interval = int(interval_raw)
@@ -153,6 +156,11 @@ def _validate_payload(payload: dict[str, Any]) -> tuple[bool, str | None]:
 
     if not isinstance(payload.get("dry_run"), bool):
         return False, "dry_run must be true or false"
+    if not isinstance(payload.get("scheduled_live_sync"), bool):
+        return False, "scheduled_live_sync must be true or false"
+
+    if str(payload.get("auth_method", "device_flow")) not in ("device_flow", "fine_grained_pat"):
+        return False, "auth_method must be device_flow or fine_grained_pat"
 
     for key in (
         "include_addon_configs",
@@ -359,6 +367,29 @@ def trigger_manual_sync():
     sync_config = _sync_config(options)
     if not sync_config.repository:
         return jsonify({"ok": False, "error": "github_repository is required"}), 400
+    if sync_config.dry_run:
+        engine = SyncEngine(sync_config, previous_hash_index=_load_json(HASH_INDEX_PATH, {}))
+        plan, _ = engine.plan()
+        scan = _plan_summary(plan)
+        started = dt.datetime.now(dt.timezone.utc).isoformat()
+        result_message = (
+            "Dry run completed. "
+            f"Would upsert {scan['added_count'] + scan['changed_count']} files and delete {scan['removed_count']} files."
+        )
+        _save_state({"status": "ok", "last_run": started, "last_error": None, "last_result": result_message, "last_scan": scan})
+        return jsonify(
+            {
+                "ok": True,
+                "result": result_message,
+                "summary": {
+                    **scan,
+                    "synced_count": scan["added_count"] + scan["changed_count"],
+                    "deleted_count": scan["removed_count"],
+                    "skipped_count": 0,
+                },
+                "state": _load_state(),
+            }
+        )
 
     started = dt.datetime.now(dt.timezone.utc).isoformat()
     _save_state({"status": "running", "last_run": started, "last_error": None})
@@ -373,7 +404,7 @@ def trigger_manual_sync():
             token=sync_config.token,
             config_root=sync_config.config_root,
             addon_config_root=sync_config.addon_config_root,
-            dry_run=False,
+            dry_run=bool(options.get("dry_run", True)),
             version_retention_count=sync_config.version_retention_count,
         )
         engine = SyncEngine(sync_config, previous_hash_index=_load_json(HASH_INDEX_PATH, {}))
@@ -412,6 +443,7 @@ def trigger_manual_sync():
             "ok": True,
             "result": result.message,
             "summary": {
+                **scan,
                 "synced_count": result.synced_count,
                 "deleted_count": result.deleted_count,
                 "skipped_count": result.skipped_count,
@@ -434,9 +466,10 @@ def set_options():
         return jsonify({"ok": False, "error": "Invalid JSON body"}), 400
 
     candidate = {
+        "auth_method": str(payload.get("auth_method", _merge_options().get("auth_method", "device_flow"))).strip()
+        or "device_flow",
         "github_repository": str(payload.get("github_repository", "")).strip(),
         "github_branch": str(payload.get("github_branch", "main")).strip() or "main",
-        "release_channel": str(payload.get("release_channel", "stable")).strip() or "stable",
         "github_token": str(payload.get("github_token", "")).strip() or _merge_options().get("github_token", ""),
         "github_client_id": str(
             payload.get("github_client_id", _merge_options().get("github_client_id", DEFAULT_OAUTH_CLIENT_ID))
@@ -446,6 +479,7 @@ def set_options():
         "version_retention_count": payload.get("version_retention_count", 7),
         "manual_version_retention_days": payload.get("manual_version_retention_days", 7),
         "dry_run": payload.get("dry_run", True),
+        "scheduled_live_sync": payload.get("scheduled_live_sync", False),
         "include_addon_configs": payload.get("include_addon_configs", True),
         "include_media": payload.get("include_media", False),
         "include_share": payload.get("include_share", False),
@@ -474,7 +508,12 @@ def get_status():
             "state": state,
             "auth": _auth_diagnostics(options),
             "version": APP_VERSION,
-            "release_channel": str(options.get("release_channel", "stable")),
+            "repo_versions": {
+                "stable": STABLE_REPO_VERSION,
+                "rc": RC_REPO_VERSION,
+                "dev": DEV_REPO_VERSION,
+                "current": APP_VERSION,
+            },
             "token_health": _token_health(options),
             "cancel_sync": _is_cancel_requested(),
             "log_tail": _sanitized_log_tail(),
@@ -696,6 +735,21 @@ def create_repo():
 def trigger_sync():
     options = _merge_options()
     sync_config = _sync_config(options)
+    if bool(options.get("scheduled_live_sync", False)):
+        sync_config = SyncConfig(
+            repository=sync_config.repository,
+            branch=sync_config.branch,
+            token=sync_config.token,
+            config_root=sync_config.config_root,
+            addon_config_root=sync_config.addon_config_root,
+            dry_run=False,
+            include_media=sync_config.include_media,
+            include_share=sync_config.include_share,
+            include_ssl=sync_config.include_ssl,
+            include_backups=sync_config.include_backups,
+            include_www=sync_config.include_www,
+            version_retention_count=sync_config.version_retention_count,
+        )
 
     if not sync_config.repository:
         state = _save_state(
@@ -808,6 +862,12 @@ def trigger_clean_sync():
         config_root=sync_config.config_root,
         addon_config_root=sync_config.addon_config_root,
         dry_run=False,
+        include_media=sync_config.include_media,
+        include_share=sync_config.include_share,
+        include_ssl=sync_config.include_ssl,
+        include_backups=sync_config.include_backups,
+        include_www=sync_config.include_www,
+        version_retention_count=sync_config.version_retention_count,
     )
     started = dt.datetime.now(dt.timezone.utc).isoformat()
     _save_state({"status": "running", "last_run": started, "last_error": None})
@@ -885,6 +945,54 @@ def trigger_clean_sync():
                 "skipped_count": result.skipped_count,
                 "total_files": result.total_files,
             },
+            "state": state,
+        }
+    )
+
+
+@app.post("/api/sync/clean-repo")
+def trigger_clean_repo():
+    options = _merge_options()
+    sync_config = _sync_config(options)
+
+    if not sync_config.repository:
+        return jsonify({"ok": False, "error": "github_repository is required"}), 400
+
+    started = dt.datetime.now(dt.timezone.utc).isoformat()
+    _save_state({"status": "running", "last_run": started, "last_error": None})
+    _set_cancel_requested(False)
+    _append_log(f"Clean repo requested for {sync_config.repository}")
+
+    try:
+        engine = SyncEngine(sync_config, previous_hash_index=_load_json(HASH_INDEX_PATH, {}))
+        engine.clean_remote_tree()
+        engine.restore_repo_skeleton()
+    except SyncError as err:
+        state = _save_state(
+            {
+                "status": "error",
+                "last_error": str(err),
+                "last_result": None,
+                "last_scan": None,
+            }
+        )
+        _append_log(f"Clean repo failed: {err}")
+        return jsonify({"ok": False, "error": str(err), "state": state}), 502
+
+    state = _save_state(
+        {
+            "status": "ok",
+            "last_success": dt.datetime.now(dt.timezone.utc).isoformat(),
+            "last_result": "Clean repo completed. Remote repo skeleton restored.",
+            "last_scan": None,
+            "last_error": None,
+        }
+    )
+    _append_log("Clean repo completed and skeleton restored")
+    return jsonify(
+        {
+            "ok": True,
+            "result": "Clean repo completed. Remote repo skeleton restored.",
             "state": state,
         }
     )

@@ -8,9 +8,7 @@
 [![Manifest](https://img.shields.io/badge/Manifest-validated-success.svg)](https://developers.home-assistant.io/docs/creating_integration_manifest/)
 [![Release](https://img.shields.io/github/v/tag/MJP-76/GithubConfigSync?label=release)](https://github.com/MJP-76/GithubConfigSync/releases)
 
-Home Assistant custom integration for syncing the Home Assistant config folder to GitHub. This is a config sync tool, not a backup tool.
-
-**Important warning:** use a private GitHub repository only. Use caution with any two-way sync or other tools that can also write to the Home Assistant config tree, because they can cause local config loss or unexpected deletions. The developer and maintainer are not responsible for data loss.
+Home Assistant custom integration for syncing the Home Assistant config folder to GitHub. This is a config sync tool, not a backup tool. <strong style="color:#ef4444">Danger Zone:</strong> <strong>Use a private GitHub repository only.</strong> Use caution with any two-way sync or other tools that can also write to the Home Assistant config tree, because they can cause local config loss or unexpected deletions.
 
 This documentation and code were drafted with AI assistance and then reviewed/edited by the maintainer.
 
@@ -25,22 +23,18 @@ If you find this project useful, and would like to help support its continued de
 ## Version Tracker
 
 <!-- VERSION:START -->
-- Integration version: `0.2.39`
-- Add-on version: `0.2.39`
-- Channel: `stable`
-- Release tag: `v0.2.39`
+- Integration version: `0.3.0`
+- Add-on version: `0.3.0`
+- Channel: `rc`
+- Release tag: `v0.3.0`
 <!-- VERSION:END -->
+
+Stable and RC releases are cut from the same main repository and share the same numeric version line; RC is the pre-release track for that line.
 
 To sync versions across integration/app/runtime/docs automatically:
 
 ```bash
-python3 scripts/sync_versions.py --integration 0.0.20 --addon 0.1.3 --channel stable
-```
-
-For a dev release:
-
-```bash
-python3 scripts/sync_versions.py --integration 0.0.20 --addon 0.1.3 --channel dev
+python3 scripts/sync_versions.py --integration 0.3.0 --addon 0.3.0 --channel rc
 ```
 
 ## Home Assistant App (Web UI)
@@ -50,14 +44,15 @@ This repository now also includes a containerized Home Assistant app with ingres
 `addons/github-config-sync/`
 
 App repository metadata is provided via `repository.yaml` so it can be added directly in Home Assistant Add-on Store.
-Security hardening is part of the current release: private repos only, sensitive-path filtering, and two-way sync warnings.
+Security hardening is part of the current release: private repos only, sensitive-path filtering, and two-way sync warnings. Follow-up work includes local API auth checks, path ancestry validation, and stronger diagnostics redaction.
 
 ## Sync defaults
 
 - Runs once a day by default.
 - Keeps 7 GitHub version snapshots by default.
 - Both values are configurable in the app UI.
-- The stable/dev release stream is selectable in the app UI and persisted with the add-on options.
+- Numeric releases stay in sequence across stable, RC, and dev.
+- Stable and RC live in the main repository; dev remains the prerelease/testing track.
 
 ## Architecture
 
@@ -71,6 +66,7 @@ Security hardening is part of the current release: private repos only, sensitive
 - Live runs also write versioned snapshots under `versions/<timestamp>/...` and keep the most recent 7 by default.
 - State, logs, device-flow data, and the last hash index live in `/data`.
 - The app exposes a stable local API contract via `/api/health`, `/api/status`, `/api/sync`, and `/api/diagnostics`.
+- Single-repo release flow: releases are numeric and sequential, and the same repository can be used for stable or prerelease testing.
 - The generated `.gitignore` includes the common Home Assistant guidance entries such as `secrets.yaml`, `ip_bans.yaml`, `known_devices.yaml`, `.storage/`, and `.cloud/`, while still honoring any local user additions.
 - After a release, Home Assistant may need a rebuild/reinstall to pick up UI changes from the app image.
 
@@ -78,7 +74,7 @@ Security hardening is part of the current release: private repos only, sensitive
 
 ### Dry run
 
-1. Open the app UI and confirm the target repository, target branch, and `dry_run=true`.
+1. Open the app UI and confirm `github_repository`, `github_branch`, and `dry_run=true`.
 2. Start or complete GitHub device login if a token is not already present.
 3. Run a sync and review the scan summary and dry-run result in the status panel.
 4. Confirm the result shows the expected upsert/delete counts without changing GitHub contents.
@@ -88,7 +84,7 @@ Security hardening is part of the current release: private repos only, sensitive
 1. Verify the target repository exists and is accessible with the saved token.
 2. Confirm the branch name is correct for the target repo.
 3. Set `dry_run=false` in the app settings.
-4. Run a sync, or use **Clean Upload** to force a full re-upload plus cleanup of remote extras.
+4. Run a sync, or use **Clean Upload** to force a full re-upload plus cleanup of remote extras. **Clean Repo** now empties the remote repo and restores the starter files in one live step. If you want scheduled runs to ignore dry run, enable the scheduled override in the add-on UI.
 5. Confirm the repository probe succeeds before the write phase.
 6. Review the status panel and logs for the final upsert/delete/skip counts.
 

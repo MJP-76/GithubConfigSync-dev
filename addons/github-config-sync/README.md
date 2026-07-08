@@ -6,9 +6,12 @@
 [![HASSfest](https://img.shields.io/badge/HASSfest-validated-success.svg)](https://developers.home-assistant.io/docs/add-ons/)
 [![Release](https://img.shields.io/github/v/tag/MJP-76/GithubConfigSync?label=release)](https://github.com/MJP-76/GithubConfigSync/releases)
 
-Containerized Home Assistant app with an ingress web UI for GitHub config sync operations. This is a sync tool, not a backup tool.
+Containerized Home Assistant app with an ingress web UI for GitHub config sync operations. Release v0.2.56. This is a sync tool, not a backup tool.
 
-**Important warning:** use a private GitHub repository only. Use caution with any two-way sync or other tools that can also write to the Home Assistant config tree, because they can cause local config loss or unexpected deletions. The developer and maintainer are not responsible for data loss.
+Authentication supports GitHub Device Flow or a fine-grained PAT scoped to the single target repository.
+
+
+<strong style="color:#ef4444">Danger Zone:</strong> <strong>use a private GitHub repository only.</strong> Use caution with any two-way sync or other tools that can also write to the Home Assistant config tree, because they can cause local config loss or unexpected deletions. The developer and maintainer are not responsible for data loss.
 
 This documentation and code were drafted with AI assistance and then reviewed/edited by the maintainer.
 
@@ -23,10 +26,10 @@ If you find this project useful, and would like to help support its continued de
 ## Version Tracker
 
 <!-- VERSION:START -->
-- Integration version: `0.2.39`
-- Add-on version: `0.2.39`
-- Channel: `stable`
-- Release tag: `v0.2.39`
+- Integration version: `0.3.0`
+- Add-on version: `0.3.0`
+- Channel: `rc`
+- Release tag: `v0.3.0`
 <!-- VERSION:END -->
 
 ## What it provides
@@ -44,13 +47,16 @@ If you find this project useful, and would like to help support its continued de
 - `sync/engine.py` computes the plan from the current `/config` tree and the saved hash index.
 - AppDaemon configs and apps under `/addon_configs/` are included in the normal sync scan.
 - The mount-point checklist lets you include or exclude standard Home Assistant folders, and the recommended .gitignore keeps the ignore list aligned.
-- `dry_run=true` stops after planning and returns the counts that would be applied.
+- `dry_run=true` stops after planning and returns the counts that would be applied for manual actions. A separate scheduled-sync checkbox can override dry run for automated runs.
 - `dry_run=false` probes the GitHub repository first, then performs upserts and deletes with the GitHub Contents API. Remote deletes never remove local files.
+- **Clean Repo** always runs live, empties the remote repo, and restores the starter files in the same step.
 - Public repositories are blocked by design; repository creation is forced private.
 - Live runs also write versioned snapshots under `versions/<timestamp>/...` and keep the most recent 7 by default.
 - Runtime state is persisted in `/data/state.json`, `/data/hash_index.json`, `/data/device_flow.json`, and `/data/sync.log`.
 - The stable local API contract is `/api/health`, `/api/status`, `/api/sync`, and `/api/diagnostics`.
 - After a release, Home Assistant may need a rebuild/reinstall to pick up UI changes from the app image.
+
+Stable and RC releases share the same main repository version line; RC is the pre-release track for that line.
 
 ## Runbook
 
@@ -72,7 +78,7 @@ If you find this project useful, and would like to help support its continued de
 1. Confirm the repository is reachable with the saved token.
 2. Confirm the branch name is correct for the target repo.
 3. Disable `dry_run`.
-4. Start a sync from the UI, or use **Clean Upload** to force a full re-upload plus cleanup of remote extras.
+4. Start a sync from the UI, or use **Clean Upload** to force a full re-upload plus cleanup of remote extras. **Clean Repo** empties the remote repo and restores the starter files in one live step. If scheduled sync should ignore dry run, enable the scheduled override checkbox first.
 5. Confirm the probe succeeds and the final result reports upserts, deletes, and skips.
 
 ### Diagnostics bundle
@@ -93,8 +99,8 @@ If you find this project useful, and would like to help support its continued de
 1. Add this repository as a Home Assistant repository.
 2. Install **Github Config Sync**.
 3. Open the app web UI and set:
-   - `github_repository` (`owner/repo`): the private GitHub repo that receives your synced Home Assistant config
-   - `github_branch`: the target branch in that repo, usually `main` for stable or `dev` for development
+   - `github_repository` (`owner/repo`)
+   - `github_branch`
    - `github_client_id` (defaults to the built-in app ID)
 4. Click **Start Device Login**, approve on GitHub, and wait for the login to complete automatically.
 5. Save settings and click **Run Sync Now**.
@@ -104,13 +110,14 @@ If you find this project useful, and would like to help support its continued de
 
 - `dry_run` is enabled by default to avoid accidental pushes.
 - This app is designed as a polished operator UI layer and can be wired to deeper sync logic incrementally.
-- Security-focused safeguards are in place: private repositories only, sensitive-path filtering, and two-way sync warnings.
+- Security-focused safeguards are in place: private repositories only, sensitive-path filtering, and two-way sync warnings. Follow-up work includes local API auth checks, path ancestry validation, and stronger diagnostics redaction.
 - The latest release includes the danger-zone security updates in the changelog.
-- Stable/dev release selection is handled in add-on options, not in the app UI.
 - The add-on repository metadata is minimal and valid for Home Assistant add-on store ingestion.
 - Version snapshots now skip ignored directories like `.cache`, even inside release snapshots.
 - New repository creation defaults blank name/description fields to a humanized repository name.
 - This release carries the repo-create default behavior and the sync fixes from the last two commits.
+- Release track split: `MJP-76/GithubConfigSync` publishes `x`, and `MJP-76/GithubConfigSync-dev` publishes `y`/`z` prereleases.
+- Versioning rule: keep numeric versions, but label the tracks as `x` (stable), `y` (RC), and `z` (dev).
 
 ## Verification notes
 

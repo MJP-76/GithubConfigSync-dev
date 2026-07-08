@@ -209,6 +209,20 @@
         font-weight: 700;
       }
 
+      .version-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .version-item {
+        background: var(--card-2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 12px;
+      }
+
       pre {
         background: var(--card-2);
         border: 1px solid var(--border);
@@ -237,21 +251,39 @@
           </div>
           <div class="row" style="justify-content: flex-end">
             <span id="versionBadge" class="pill status">Version...</span>
-            <span id="channelBadge" class="pill status">Channel...</span>
             <span id="status" class="pill status">Loading...</span>
           </div>
         </div>
+        <div class="version-grid">
+          <div class="version-item">
+            <span class="progress-label">X track (1)</span>
+            <span id="stableRepoVersion" class="progress-value">Loading...</span>
+          </div>
+          <div class="version-item">
+            <span class="progress-label">Y track (2)</span>
+            <span id="rcRepoVersion" class="progress-value">Loading...</span>
+          </div>
+          <div class="version-item">
+            <span class="progress-label">Z track (3)</span>
+            <span id="devRepoVersion" class="progress-value">Loading...</span>
+          </div>
+          <div class="version-item">
+            <span class="progress-label">Current add-on</span>
+            <span id="currentRepoVersion" class="progress-value">Loading...</span>
+          </div>
+        </div>
         <div class="notice" style="margin-top: 14px">
-          <strong>Rebuild note:</strong> after a new release, Home Assistant may keep using a cached add-on image. If you do not see a UI change, rebuild/reinstall the add-on image and then restart the add-on.
-          Remote deletes only affect GitHub and never remove local files.
-          Use caution with any two-way sync or other tools that can also write to the Home Assistant config tree, because they can cause local config loss or unexpected deletions.
-          Use a private GitHub repository only; public repositories are blocked by design.
+          <strong>Rebuild note:</strong> after a new release, Home Assistant may still use a cached add-on image.
+          If the UI does not change, rebuild/reinstall the add-on and restart it.
+        </div>
+        <div class="notice" style="margin-top: 12px">
+          <strong>Safety note:</strong> remote deletes only affect GitHub and never remove local files.
+        </div>
+        <div class="notice" style="margin-top: 12px">
+          <strong>Release tracks:</strong> X = stable, Y = RC, Z = dev. Stable releases ship from `MJP-76/GithubConfigSync`, and prereleases ship from `MJP-76/GithubConfigSync-dev`.
         </div>
         <div class="danger" style="margin-top: 12px">
-          <strong>Important warning:</strong> use a private GitHub repository only. Use caution with any two-way sync or other tools that can also write to the Home Assistant config tree, because they can cause local config loss or unexpected deletions. The developer and maintainer are not responsible for data loss.
-        </div>
-        <div class="danger" style="margin-top: 12px">
-          <strong>Danger zone:</strong> Home Assistant config can contain secrets, tokens, device data, and other sensitive files. Public repositories are blocked, sensitive paths are filtered, and any two-way sync or inbound write path can put your local config at risk.
+          <strong style="color: var(--err)">Danger Zone:</strong> Home Assistant config can contain secrets, tokens, device data, and other sensitive files. Public repositories are blocked, sensitive paths are filtered, and any two-way sync or inbound write path can put your local config at risk.
         </div>
       </div>
 
@@ -292,17 +324,35 @@
             <span id="removeTotal" class="progress-value">0</span>
           </div>
         </div>
+        <details style="margin-top: 12px">
+          <summary class="section-title" style="cursor: pointer">Dry-run plan</summary>
+          <div class="grid" style="margin-top: 10px">
+            <div class="field">
+              <label>Could be uploaded</label>
+              <pre id="dryRunUpserts" style="min-height: 140px">No dry-run yet.</pre>
+            </div>
+            <div class="field">
+              <label>Could be deleted</label>
+              <pre id="dryRunDeletes" style="min-height: 140px">No dry-run yet.</pre>
+            </div>
+          </div>
+        </details>
       </div>
 
       <div class="card">
         <h2 class="section-title">GitHub Device Login</h2>
         <p class="subtle" style="margin-bottom: 10px">
-          Private repositories are supported. Make sure the GitHub token has access to the selected private repo and the branch name is correct.
+          Choose how GitHub should authenticate this add-on.
         </p>
-        <p class="subtle" style="margin-bottom: 10px; color: var(--err)">
-          Danger zone: never use a public repo here, and do not combine this with any other tool that writes back into your Home Assistant config tree.
-        </p>
-        <div class="row">
+        <div class="field" style="margin-bottom: 10px">
+          <label for="authMethod">Authentication method</label>
+          <select id="authMethod">
+            <option value="device_flow">GitHub Device Flow (Recommended)</option>
+            <option value="fine_grained_pat">Fine-grained PAT (Security Focused)</option>
+          </select>
+        </div>
+        <p id="authMethodHelp" class="subtle" style="margin-bottom: 10px"></p>
+        <div class="row" id="deviceLoginRow">
           <button id="startDeviceBtn" class="secondary">Start Device Login</button>
           <span id="tokenBadge" class="pill status">Token missing</span>
         </div>
@@ -318,6 +368,9 @@
           </div>
         </div>
         <div id="existingRepoSection" style="margin-top: 12px">
+          <p class="subtle" style="margin-bottom: 10px; color: var(--err)">
+            <strong style="color: var(--err)">Danger Zone:</strong> never use a public repo here, and do not combine this with any other tool that writes back into your Home Assistant config tree.
+          </p>
           <div class="row">
             <input id="repoSearch" placeholder="Filter repositories (including private repos)..." style="flex: 1" />
             <button id="loadReposBtn" class="secondary">Load Repositories</button>
@@ -356,13 +409,6 @@
           <div class="field">
             <label for="branch">Target branch</label>
             <input id="branch" placeholder="main" />
-          </div>
-          <div class="field">
-            <label for="releaseChannel">Release channel</label>
-            <select id="releaseChannel">
-              <option value="stable">Stable</option>
-              <option value="dev">Dev</option>
-            </select>
           </div>
           <div class="field">
             <label for="interval">Sync Interval (minutes)</label>
@@ -404,6 +450,10 @@
           <input id="dryRun" type="checkbox" />
           <label for="dryRun">Dry run mode (no push)</label>
         </div>
+        <div class="row" style="margin-top: 8px">
+          <input id="scheduledLiveSync" type="checkbox" />
+          <label for="scheduledLiveSync">Scheduled sync ignores dry run</label>
+        </div>
         <div class="row" style="margin-top: 14px">
           <button id="saveBtn">Save Settings</button>
           <button id="syncBtn" class="secondary">Run Sync Now</button>
@@ -413,13 +463,17 @@
       </div>
 
       <div class="card danger">
-        <h2 class="section-title">Danger zone</h2>
+        <h2 class="section-title"><strong style="color: var(--err)">Danger Zone</strong></h2>
         <p class="subtle" style="margin-bottom: 10px">
-          Destructive actions live here. Clean Upload rebuilds the remote repo from the current local config, and Clean Repo Skeleton clears the live repo back to a bare starter state for fresh uploads.
+          Destructive actions live here. Clean Upload rebuilds the remote repo from the current local config, and Clean Repo empties the remote repo before restoring the starter files.
+        </p>
+        <p class="subtle" style="margin-bottom: 10px; color: var(--err)">
+          <strong style="color: var(--err)">Danger:</strong> use a private repository only, and avoid any two-way sync tools that can write back into your Home Assistant config tree.
         </p>
         <div class="row">
           <button id="cleanSyncBtn">Clean Upload</button>
-          <button id="cleanRepoBtn" class="secondary">Clean Repo Skeleton</button>
+          <button id="cleanRepoBtn" class="secondary">Clean Repo</button>
+          <button id="cancelProcessBtn" class="secondary">Cancel Process</button>
         </div>
       </div>
 
@@ -447,16 +501,21 @@
           </div>
         </details>
       </div>
+
     </div>
 
     <script>
       const el = {
         status: document.getElementById("status"),
         versionBadge: document.getElementById("versionBadge"),
-        channelBadge: document.getElementById("channelBadge"),
+        stableRepoVersion: document.getElementById("stableRepoVersion"),
+        rcRepoVersion: document.getElementById("rcRepoVersion"),
+        devRepoVersion: document.getElementById("devRepoVersion"),
+        currentRepoVersion: document.getElementById("currentRepoVersion"),
         repo: document.getElementById("repo"),
+        authMethod: document.getElementById("authMethod"),
+        authMethodHelp: document.getElementById("authMethodHelp"),
         branch: document.getElementById("branch"),
-        releaseChannel: document.getElementById("releaseChannel"),
         token: document.getElementById("token"),
         clientId: document.getElementById("clientId"),
         interval: document.getElementById("interval"),
@@ -468,12 +527,15 @@
         includeBackups: document.getElementById("includeBackups"),
         includeWww: document.getElementById("includeWww"),
         dryRun: document.getElementById("dryRun"),
+        scheduledLiveSync: document.getElementById("scheduledLiveSync"),
         runtime: document.getElementById("runtime"),
         progressStatus: document.getElementById("progressStatus"),
         upsertRemaining: document.getElementById("upsertRemaining"),
         removeRemaining: document.getElementById("removeRemaining"),
         upsertTotal: document.getElementById("upsertTotal"),
         removeTotal: document.getElementById("removeTotal"),
+        dryRunUpserts: document.getElementById("dryRunUpserts"),
+        dryRunDeletes: document.getElementById("dryRunDeletes"),
         saveBtn: document.getElementById("saveBtn"),
         startDeviceBtn: document.getElementById("startDeviceBtn"),
         repoMode: document.querySelectorAll("input[name='repoMode']"),
@@ -492,6 +554,12 @@
         refreshBtn: document.getElementById("refreshBtn"),
         downloadDiagnosticsBtn: document.getElementById("downloadDiagnosticsBtn"),
         cancelSyncBtn: document.getElementById("cancelSyncBtn"),
+        cancelProcessBtn: document.getElementById("cancelProcessBtn"),
+        confirmModal: document.getElementById("confirmModal"),
+        confirmTitle: document.getElementById("confirmTitle"),
+        confirmBody: document.getElementById("confirmBody"),
+        confirmOkBtn: document.getElementById("confirmOkBtn"),
+        confirmCancelBtn: document.getElementById("confirmCancelBtn"),
         ignoreList: document.getElementById("ignoreList"),
         ignoreMeta: document.getElementById("ignoreMeta"),
         saveIgnoreBtn: document.getElementById("saveIgnoreBtn"),
@@ -502,6 +570,10 @@
       let cachedRepos = [];
       let cachedIgnorePatterns = [];
       let statusPollTimer = null;
+      let confirmAction = null;
+      let autoSaveTimer = null;
+      let autoSaveInFlight = false;
+      let autoSaveQueued = false;
       const ingressBase = `${window.location.pathname.replace(/\/+$/, "")}/`;
 
       function apiUrl(path) {
@@ -534,7 +606,7 @@
       }
 
       function updateTokenBadge(tokenHealth) {
-        const state = tokenHealth?.state || "missing";
+        const state = (tokenHealth && tokenHealth.state) || "missing";
         const isGood = state === "valid" || state === "configured";
         const isChecking = state === "checking";
         const label =
@@ -549,9 +621,22 @@
         el.tokenBadge.className = `status ${isChecking ? "" : isGood ? "ok" : "err"}`.trim();
       }
 
+      function updateAuthMethodHelp() {
+        if (el.authMethod.value === "fine_grained_pat") {
+          el.authMethodHelp.textContent =
+            "Use a fine-grained PAT scoped to this single repository with only the permissions needed for sync.";
+          el.startDeviceBtn.disabled = true;
+          el.deviceFlowInfo.textContent = "Device login is not used when fine-grained PAT mode is selected.";
+          return;
+        }
+        el.authMethodHelp.textContent =
+          "Device Flow is recommended for most users. It avoids pasting a token manually and keeps the login flow in GitHub.";
+        el.startDeviceBtn.disabled = false;
+      }
+
       function getRepoMode() {
         const selected = Array.from(el.repoMode).find((item) => item.checked);
-        return selected?.value || "existing";
+        return (selected && selected.value) || "existing";
       }
 
       function applyRepoMode() {
@@ -576,6 +661,13 @@
           option.textContent = `${repo.full_name}${repo.private ? " (private)" : ""}`;
           el.repoPicker.appendChild(option);
         });
+      }
+
+      function renderDryRunPlan(summary) {
+        const upserts = [].concat(summary?.added_files || [], summary?.changed_files || []);
+        const deletes = summary?.removed_files || [];
+        el.dryRunUpserts.textContent = upserts.length ? upserts.join("\n") : "Nothing to upload.";
+        el.dryRunDeletes.textContent = deletes.length ? deletes.join("\n") : "Nothing to delete.";
       }
 
       async function fetchJson(url, options = {}) {
@@ -604,19 +696,21 @@
       async function loadOptions() {
         const data = await fetchJson(apiUrl("/api/options"));
         el.repo.value = data.github_repository || "";
+        el.authMethod.value = data.auth_method || "device_flow";
         el.branch.value = data.github_branch || "main";
-        el.releaseChannel.value = data.release_channel || "stable";
         el.token.value = "";
         el.clientId.value = data.github_client_id || "";
-        el.interval.value = data.sync_interval_minutes ?? 1440;
-        el.versionRetention.value = data.version_retention_count ?? 7;
+        el.interval.value = data.sync_interval_minutes || 1440;
+        el.versionRetention.value = data.version_retention_count || 7;
         el.dryRun.checked = Boolean(data.dry_run);
-        el.includeAddonConfigs.checked = Boolean(data.include_addon_configs ?? true);
+        el.scheduledLiveSync.checked = Boolean(data.scheduled_live_sync);
+        el.includeAddonConfigs.checked = Boolean(data.include_addon_configs !== false);
         el.includeMedia.checked = Boolean(data.include_media);
         el.includeShare.checked = Boolean(data.include_share);
-        el.includeSsl.checked = Boolean(data.include_ssl ?? true);
+        el.includeSsl.checked = Boolean(data.include_ssl !== false);
         el.includeBackups.checked = Boolean(data.include_backups);
-        el.includeWww.checked = Boolean(data.include_www ?? true);
+        el.includeWww.checked = Boolean(data.include_www !== false);
+        updateAuthMethodHelp();
       }
 
       async function loadRepositories(strict = false) {
@@ -658,13 +752,13 @@
       async function loadStatus() {
         const data = await fetchJson(apiUrl("/api/status"));
         updateTokenBadge(data.token_health);
-        const progress = data.state?.sync_progress;
+        const progress = data.state && data.state.sync_progress;
         if (progress) {
           el.progressStatus.textContent = `${progress.current_action || "running"} (${progress.status || "running"})`;
-          el.upsertRemaining.textContent = String(progress.upsert_remaining ?? 0);
-          el.removeRemaining.textContent = String(progress.remove_remaining ?? 0);
-          el.upsertTotal.textContent = String(progress.upsert_total ?? 0);
-          el.removeTotal.textContent = String(progress.remove_total ?? 0);
+          el.upsertRemaining.textContent = String(progress.upsert_remaining || 0);
+          el.removeRemaining.textContent = String(progress.remove_remaining || 0);
+          el.upsertTotal.textContent = String(progress.upsert_total || 0);
+          el.removeTotal.textContent = String(progress.remove_total || 0);
         } else {
           el.progressStatus.textContent = "No upload in progress.";
           el.upsertRemaining.textContent = "0";
@@ -677,8 +771,11 @@
           "\n\n" +
           (data.log_tail || "");
         el.versionBadge.textContent = `Version: ${data.version || "unknown"}`;
-        el.channelBadge.textContent = `Channel: ${data.release_channel || "stable"}`;
-        setStatus(`Channel: ${data.release_channel || "stable"} | ${data.state?.status || "idle"}`, data.state?.status !== "error");
+        el.stableRepoVersion.textContent = (data.repo_versions && data.repo_versions.stable) || "unknown";
+        el.rcRepoVersion.textContent = (data.repo_versions && data.repo_versions.rc) || "unknown";
+        el.devRepoVersion.textContent = (data.repo_versions && data.repo_versions.dev) || "unknown";
+        el.currentRepoVersion.textContent = (data.repo_versions && data.repo_versions.current) || data.version || "unknown";
+        setStatus(`${(data.state && data.state.status) || "idle"}`, !(data.state && data.state.status === "error"));
       }
 
       function startStatusPolling() {
@@ -737,17 +834,19 @@
       }
 
       async function saveOptions() {
+        autoSaveInFlight = true;
         setButtonBusy(el.saveBtn, true, "Saving...");
         try {
           const payload = {
             github_repository: el.repo.value.trim(),
+            auth_method: el.authMethod.value,
             github_branch: el.branch.value.trim() || "main",
-            release_channel: el.releaseChannel.value,
             github_token: el.token.value.trim(),
             github_client_id: el.clientId.value.trim(),
             sync_interval_minutes: Number(el.interval.value || "60"),
             version_retention_count: Number(el.versionRetention.value || "7"),
             dry_run: el.dryRun.checked,
+            scheduled_live_sync: el.scheduledLiveSync.checked,
             include_addon_configs: el.includeAddonConfigs.checked,
             include_media: el.includeMedia.checked,
             include_share: el.includeShare.checked,
@@ -760,7 +859,26 @@
           await Promise.all([loadStatus(), loadDeviceFlowStatus()]);
         } finally {
           setButtonBusy(el.saveBtn, false);
+          autoSaveInFlight = false;
+          if (autoSaveQueued) {
+            autoSaveQueued = false;
+            scheduleAutoSave();
+          }
         }
+      }
+
+      function scheduleAutoSave() {
+        if (autoSaveTimer) {
+          window.clearTimeout(autoSaveTimer);
+        }
+        autoSaveTimer = window.setTimeout(() => {
+          autoSaveTimer = null;
+          if (autoSaveInFlight) {
+            autoSaveQueued = true;
+            return;
+          }
+          saveOptions().catch((error) => setStatus(error.message, false));
+        }, 900);
       }
 
       async function startDeviceLogin() {
@@ -816,7 +934,15 @@
         setButtonBusy(el.syncBtn, true, "Running...");
         try {
           const data = await fetchJson(apiUrl("/api/sync/manual"), { method: "POST" });
-          setStatus(data.result || "Sync completed");
+          if (data.summary) {
+            renderDryRunPlan(data.summary);
+            setStatus(
+              `${data.result || "Sync completed"} (${data.summary.added_count + data.summary.changed_count} upserts, ${data.summary.removed_count} deletes)`,
+              true
+            );
+          } else {
+            setStatus(data.result || "Sync completed");
+          }
           await loadStatus();
         } finally {
           setButtonBusy(el.syncBtn, false);
@@ -831,6 +957,17 @@
           await loadStatus();
         } finally {
           setButtonBusy(el.cleanSyncBtn, false);
+        }
+      }
+
+      async function cleanRepoSkeleton() {
+        setButtonBusy(el.cleanRepoBtn, true, "Cleaning...");
+        try {
+          const data = await fetchJson(apiUrl("/api/sync/clean-repo"), { method: "POST" });
+          setStatus(data.result || "Clean repo completed");
+          await loadStatus();
+        } finally {
+          setButtonBusy(el.cleanRepoBtn, false);
         }
       }
 
@@ -851,13 +988,20 @@
       el.syncBtn.addEventListener("click", () =>
         runSync().catch((error) => setStatus(error.message, false))
       );
-      el.cleanSyncBtn.addEventListener("click", () =>
-        runCleanSync().catch((error) => setStatus(error.message, false))
-      );
-      el.cleanRepoBtn.addEventListener("click", () =>
-        runCleanSync().catch((error) => setStatus(error.message, false))
-      );
+      el.cleanSyncBtn.addEventListener("click", () => {
+        if (window.confirm(`Run Clean Upload on ${el.repo.value.trim() || "the selected repository"}? This will rebuild the remote repo from the current local config.`)) {
+          runCleanSync().catch((error) => setStatus(error.message, false));
+        }
+      });
+      el.cleanRepoBtn.addEventListener("click", () => {
+        if (window.confirm(`Run Clean Repo on ${el.repo.value.trim() || "the selected repository"}? This will empty the remote repo and restore the base skeleton.`)) {
+          cleanRepoSkeleton().catch((error) => setStatus(error.message, false));
+        }
+      });
       el.cancelSyncBtn.addEventListener("click", () =>
+        cancelCurrentSync().catch((error) => setStatus(error.message, false))
+      );
+      el.cancelProcessBtn.addEventListener("click", () =>
         cancelCurrentSync().catch((error) => setStatus(error.message, false))
       );
       el.startDeviceBtn.addEventListener("click", () =>
@@ -884,6 +1028,25 @@
         if (!el.newRepoDescription.value.trim()) {
           el.newRepoDescription.value = humanizeRepoName(el.newRepoName.value);
         }
+      });
+      [
+        el.repo,
+        el.authMethod,
+        el.branch,
+        el.clientId,
+        el.interval,
+        el.versionRetention,
+        el.dryRun,
+        el.scheduledLiveSync,
+        el.includeAddonConfigs,
+        el.includeMedia,
+        el.includeShare,
+        el.includeSsl,
+        el.includeBackups,
+        el.includeWww,
+      ].forEach((item) => {
+        const eventName = item && item.type === "checkbox" ? "change" : "input";
+        item.addEventListener(eventName, scheduleAutoSave);
       });
       el.refreshBtn.addEventListener("click", () =>
         {

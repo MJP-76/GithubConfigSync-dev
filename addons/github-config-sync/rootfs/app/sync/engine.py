@@ -167,10 +167,16 @@ class SyncEngine:
         )
 
     def clean_remote_tree(self) -> None:
-        self._delete_remote_tree_except(
-            "",
-            excluded_names={"versions", "README.md", "custom_components", "addons", ".github"},
-        )
+        head_sha = self._github.get_branch_head_sha()
+        empty_tree = self._github.create_git_tree(tree=[])["sha"]
+        commit = self._github.create_git_commit("sync: clean repo", empty_tree, head_sha)
+        commit_sha = commit.get("sha")
+        if not isinstance(commit_sha, str) or not commit_sha:
+            raise RuntimeError("GitHub create commit returned incomplete payload")
+        self._github.update_branch_ref(commit_sha)
+
+    def restore_repo_skeleton(self) -> None:
+        self._restore_repo_skeleton()
 
     def _sync_version_snapshot(self) -> None:
         timestamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -293,6 +299,16 @@ class SyncEngine:
                 sha=sha,
                 message=f"sync: delete {item_path}",
             )
+
+    def _restore_repo_skeleton(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        skeleton_files = [
+            ("README.md", repo_root / "README.md"),
+            ("repository.yaml", repo_root / "repository.yaml"),
+        ]
+        for remote_path, local_path in skeleton_files:
+            if local_path.exists():
+                self._put_with_retry(remote_path, local_path.read_bytes(), message=f"sync: restore {remote_path}")
 
     def _build_hash_index(self) -> dict[str, str]:
         index: dict[str, str] = {}
