@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Clean Upload now always runs live too, matching Clean Repo.
+
+## 0.2.59
+
+- Clean Upload now always runs live too, matching Clean Repo.
+
 - Quiet Flask/Werkzeug access logs so repeated status polling does not flood the add-on log.
 
 ## 0.2.58

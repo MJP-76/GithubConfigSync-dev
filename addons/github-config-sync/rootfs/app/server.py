@@ -14,7 +14,7 @@ from sync.errors import SyncError
 from sync.github_client import GitHubClient
 from sync.hashing import IGNORE_PATTERNS
 
-APP_VERSION = "0.2.58"
+APP_VERSION = "0.2.59"
 STABLE_REPO_VERSION = "0.2.39"
 RC_REPO_VERSION = "0.2.52"
 DEV_REPO_VERSION = APP_VERSION
@@ -835,17 +835,19 @@ def trigger_clean_sync():
     sync_config = _sync_config(options)
     if not sync_config.repository:
         return jsonify({"ok": False, "error": "github_repository is required"}), 400
-    if sync_config.dry_run:
-        started = dt.datetime.now(dt.timezone.utc).isoformat()
-        _save_state({"status": "ok", "last_run": started, "last_error": None})
-        return jsonify({"ok": True, "result": "Dry run completed. No remote changes were made.", "state": _load_state()})
     sync_config = SyncConfig(
         repository=sync_config.repository,
         branch=sync_config.branch,
         token=sync_config.token,
         config_root=sync_config.config_root,
         addon_config_root=sync_config.addon_config_root,
-        dry_run=bool(options.get("dry_run", True)),
+        dry_run=False,
+        include_media=sync_config.include_media,
+        include_share=sync_config.include_share,
+        include_ssl=sync_config.include_ssl,
+        include_backups=sync_config.include_backups,
+        include_www=sync_config.include_www,
+        version_retention_count=sync_config.version_retention_count,
     )
     started = dt.datetime.now(dt.timezone.utc).isoformat()
     _save_state({"status": "running", "last_run": started, "last_error": None})

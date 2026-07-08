@@ -250,7 +250,7 @@ class ServerApiTests(unittest.TestCase):
 
         self.assertEqual(status["auth"]["token_state"], "configured")
         self.assertEqual(status["repo_versions"]["stable"], "0.2.39")
-        self.assertEqual(status["repo_versions"]["dev"], "0.2.58")
+        self.assertEqual(status["repo_versions"]["dev"], "0.2.59")
         self.assertEqual(diagnostics["options"]["github_token"], "********")
 
     def test_create_repository_uses_default_name_when_blank(self) -> None:
@@ -374,8 +374,8 @@ class ServerApiTests(unittest.TestCase):
         body = response.get_json()
         self.assertEqual(response.status_code, 200)
         self.assertTrue(body["ok"])
-        self.assertEqual(body["result"], "Dry run completed. No remote changes were made.")
-        self.assertIsNone(body["state"].get("last_scan"))
+        self.assertEqual(body["result"], "Sync completed.")
+        self.assertIsNotNone(body["state"].get("last_scan"))
 
     def test_clean_sync_forces_live_upload_even_when_dry_run_is_enabled(self) -> None:
         (self._config_root / "one.txt").write_text("one", encoding="utf-8")
@@ -411,7 +411,7 @@ class ServerApiTests(unittest.TestCase):
         body = response.get_json()
         self.assertEqual(response.status_code, 200)
         self.assertTrue(body["ok"])
-        self.assertEqual(body["result"], "Dry run completed. No remote changes were made.")
+        self.assertEqual(body["result"], "Sync completed.")
 
     def test_clean_sync_clears_remote_tree_before_upload(self) -> None:
         (self._config_root / "one.txt").write_text("one", encoding="utf-8")
@@ -446,8 +446,8 @@ class ServerApiTests(unittest.TestCase):
         body = response.get_json()
         self.assertEqual(response.status_code, 200)
         self.assertTrue(body["ok"])
-        self.assertEqual(body["result"], "Dry run completed. No remote changes were made.")
-        engine.clean_remote_tree.assert_not_called()
+        self.assertEqual(body["result"], "Sync completed.")
+        engine.clean_remote_tree.assert_called_once()
 
     def test_clean_repo_endpoint_clears_remote_tree_without_upload(self) -> None:
         self._write_options(
