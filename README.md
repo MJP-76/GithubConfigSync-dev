@@ -25,10 +25,10 @@ If you find this project useful, and would like to help support its continued de
 ## Version Tracker
 
 <!-- VERSION:START -->
-- Integration version: `0.2.38`
-- App version: `0.2.38`
+- Integration version: `0.2.39`
+- App version: `0.2.39`
 - Channel: `stable`
-- Release tag: `v0.2.38`
+- Release tag: `v0.2.39`
 <!-- VERSION:END -->
 
 To sync versions across integration/app/runtime/docs automatically:

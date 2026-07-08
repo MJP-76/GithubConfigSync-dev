@@ -13,7 +13,7 @@ from sync.errors import SyncError
 from sync.github_client import GitHubClient
 from sync.hashing import IGNORE_PATTERNS
 
-APP_VERSION = "0.2.38"
+APP_VERSION = "0.2.39"
 APP_PORT = 8099
 DEFAULT_OAUTH_CLIENT_ID = "Ov23li2ycCraodta6WCU"
 
@@ -473,6 +473,8 @@ def get_status():
             "ok": True,
             "state": state,
             "auth": _auth_diagnostics(options),
+            "version": APP_VERSION,
+            "release_channel": str(options.get("release_channel", "stable")),
             "token_health": _token_health(options),
             "cancel_sync": _is_cancel_requested(),
             "log_tail": _sanitized_log_tail(),

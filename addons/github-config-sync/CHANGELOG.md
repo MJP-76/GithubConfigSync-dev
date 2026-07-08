@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-- Preparing the v0.2.38 release bump.
+- Preparing the v0.2.39 release bump.
+
+## 0.2.39
+
+- Synced the stable and dev branches around the app header release metadata and the clarified target repository wording.
 
 ## 0.2.38
 
