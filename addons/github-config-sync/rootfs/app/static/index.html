@@ -244,6 +244,9 @@
           Use a private GitHub repository only; public repositories are blocked by design.
         </div>
         <div class="danger" style="margin-top: 12px">
+          <strong>Important warning:</strong> use a private GitHub repository only. Use caution with any two-way sync or other tools that can also write to the Home Assistant config tree, because they can cause local config loss or unexpected deletions. The developer and maintainer are not responsible for data loss.
+        </div>
+        <div class="danger" style="margin-top: 12px">
           <strong>Danger zone:</strong> Home Assistant config can contain secrets, tokens, device data, and other sensitive files. Public repositories are blocked, sensitive paths are filtered, and any two-way sync or inbound write path can put your local config at risk.
         </div>
       </div>
@@ -351,6 +354,13 @@
             <input id="branch" placeholder="main" />
           </div>
           <div class="field">
+            <label for="releaseChannel">Release channel</label>
+            <select id="releaseChannel">
+              <option value="stable">Stable</option>
+              <option value="dev">Dev</option>
+            </select>
+          </div>
+          <div class="field">
             <label for="interval">Sync Interval (minutes)</label>
             <input id="interval" type="number" min="5" max="1440" />
           </div>
@@ -440,6 +450,7 @@
         status: document.getElementById("status"),
         repo: document.getElementById("repo"),
         branch: document.getElementById("branch"),
+        releaseChannel: document.getElementById("releaseChannel"),
         token: document.getElementById("token"),
         clientId: document.getElementById("clientId"),
         interval: document.getElementById("interval"),
@@ -588,6 +599,7 @@
         const data = await fetchJson(apiUrl("/api/options"));
         el.repo.value = data.github_repository || "";
         el.branch.value = data.github_branch || "main";
+        el.releaseChannel.value = data.release_channel || "stable";
         el.token.value = "";
         el.clientId.value = data.github_client_id || "";
         el.interval.value = data.sync_interval_minutes ?? 1440;
@@ -721,8 +733,8 @@
         try {
           const payload = {
             github_repository: el.repo.value.trim(),
-
             github_branch: el.branch.value.trim() || "main",
+            release_channel: el.releaseChannel.value,
             github_token: el.token.value.trim(),
             github_client_id: el.clientId.value.trim(),
             sync_interval_minutes: Number(el.interval.value || "60"),

@@ -66,6 +66,7 @@ class ServerApiTests(unittest.TestCase):
             {
                 "github_repository": "",
                 "github_branch": "main",
+                "release_channel": "stable",
                 "github_token": "token",
                 "sync_interval_minutes": 60,
                 "dry_run": True,
@@ -85,6 +86,7 @@ class ServerApiTests(unittest.TestCase):
             {
                 "github_repository": "owner/repo",
                 "github_branch": "main",
+                "release_channel": "stable",
                 "github_token": "token",
                 "sync_interval_minutes": 60,
                 "dry_run": True,
@@ -104,6 +106,7 @@ class ServerApiTests(unittest.TestCase):
             {
                 "github_repository": "owner/repo",
                 "github_branch": "main",
+                "release_channel": "stable",
                 "github_token": "token",
                 "sync_interval_minutes": 60,
                 "dry_run": True,
@@ -118,7 +121,7 @@ class ServerApiTests(unittest.TestCase):
         self.assertTrue(body["include_addon_configs"])
 
     def test_start_device_flow_returns_verification_data(self) -> None:
-        self._write_options({"github_client_id": "client-id", "github_branch": "main"})
+        self._write_options({"github_client_id": "client-id", "github_branch": "main", "release_channel": "stable"})
         with patch("sync.github_client.GitHubClient.start_device_flow") as start_flow:
             start_flow.return_value = {
                 "device_code": "device-code",
@@ -148,7 +151,7 @@ class ServerApiTests(unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        self._write_options({"github_repository": "owner/repo", "github_branch": "main"})
+        self._write_options({"github_repository": "owner/repo", "github_branch": "main", "release_channel": "stable"})
         with patch("sync.github_client.GitHubClient.exchange_device_code", return_value="gho_testtoken"):
             response = self.client.post("/api/auth/device/complete")
 
@@ -173,7 +176,7 @@ class ServerApiTests(unittest.TestCase):
         self.assertIn("GitHub token is missing", body["error"])
 
     def test_list_repositories_returns_picker_items(self) -> None:
-        self._write_options({"github_repository": "owner/repo", "github_branch": "main", "github_token": "gho_x"})
+        self._write_options({"github_repository": "owner/repo", "github_branch": "main", "release_channel": "stable", "github_token": "gho_x"})
         with patch("sync.github_client.GitHubClient.list_user_repositories") as list_repos:
             list_repos.return_value = [
                 {"name": "repo-a", "full_name": "owner/repo-a", "private": True},
@@ -188,7 +191,7 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(body["repos"][0]["full_name"], "owner/repo-a")
 
     def test_create_repository_updates_selected_repository(self) -> None:
-        self._write_options({"github_branch": "main", "github_token": "gho_x"})
+        self._write_options({"github_branch": "main", "release_channel": "stable", "github_token": "gho_x"})
         with patch("sync.github_client.GitHubClient.create_repository") as create_repo:
             create_repo.return_value = {"full_name": "owner/new-config-repo"}
             response = self.client.post(
@@ -202,7 +205,7 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(body["repository"], "owner/new-config-repo")
 
     def test_create_repository_forces_private_repo(self) -> None:
-        self._write_options({"github_branch": "main", "github_token": "gho_x"})
+        self._write_options({"github_branch": "main", "release_channel": "stable", "github_token": "gho_x"})
         with patch("sync.github_client.GitHubClient.create_repository") as create_repo:
             create_repo.return_value = {"full_name": "owner/new-config-repo"}
             response = self.client.post(
@@ -221,6 +224,7 @@ class ServerApiTests(unittest.TestCase):
             {
                 "github_repository": "owner/repo",
                 "github_branch": "main",
+                "release_channel": "stable",
                 "github_token": "gho_test",
                 "sync_interval_minutes": 60,
                 "dry_run": True,
@@ -234,7 +238,7 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(diagnostics["options"]["github_token"], "********")
 
     def test_create_repository_uses_default_name_when_blank(self) -> None:
-        self._write_options({"github_branch": "main", "github_token": "gho_x"})
+        self._write_options({"github_branch": "main", "release_channel": "stable", "github_token": "gho_x"})
         with patch("sync.github_client.GitHubClient.create_repository") as create_repo:
             create_repo.return_value = {"full_name": "owner/home-assistant-config"}
             response = self.client.post(

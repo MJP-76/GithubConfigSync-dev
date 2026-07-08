@@ -6,7 +6,7 @@ Use this as the single source of truth for **where we are**, **what is next**, a
 
 ## Status Snapshot
 
-- **Current milestone:** `v0.2.37 — Release cleanup`
+- **Current milestone:** `v0.2.38 — Release cleanup`
 - **Last updated:** 2026-07-08
 - **Track:** Home Assistant Integration + Home Assistant Add-on (Ingress Web UI)
 - **Latest shipped improvements:** added danger-zone security hardening (private repos only, sensitive-path filtering, two-way sync warnings)
@@ -14,10 +14,10 @@ Use this as the single source of truth for **where we are**, **what is next**, a
 - **Version state:** Synced to the current release below.
 
 <!-- VERSION:START -->
-- Integration version: `0.2.37`
-- Add-on version: `0.2.37`
+- Integration version: `0.2.38`
+- Add-on version: `0.2.38`
 - Channel: `stable`
-- Release tag: `v0.2.37`
+- Release tag: `v0.2.38`
 <!-- VERSION:END -->
 
 ---

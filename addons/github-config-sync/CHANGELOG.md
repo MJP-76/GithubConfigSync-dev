@@ -2,7 +2,12 @@
 
 ## Unreleased
 
-- Preparing the v0.2.37 release bump.
+- Preparing the v0.2.38 release bump.
+
+## 0.2.38
+
+- Restored the stable/dev selector in the app UI and persisted it in add-on settings.
+- Kept the release workflow aligned with the stable release line on `main`.
 
 ## 0.2.37
 

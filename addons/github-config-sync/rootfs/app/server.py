@@ -13,7 +13,7 @@ from sync.errors import SyncError
 from sync.github_client import GitHubClient
 from sync.hashing import IGNORE_PATTERNS
 
-APP_VERSION = "0.2.37"
+APP_VERSION = "0.2.38"
 APP_PORT = 8099
 DEFAULT_OAUTH_CLIENT_ID = "Ov23li2ycCraodta6WCU"
 
@@ -30,6 +30,7 @@ CONFIG_ROOT = Path("/config")
 DEFAULT_OPTIONS: dict[str, Any] = {
     "github_repository": "",
     "github_branch": "main",
+    "release_channel": "stable",
     "github_token": "",
     "github_client_id": DEFAULT_OAUTH_CLIENT_ID,
     "sync_interval_minutes": 1440,
@@ -121,6 +122,10 @@ def _validate_payload(payload: dict[str, Any]) -> tuple[bool, str | None]:
     branch = str(payload.get("github_branch", "")).strip()
     if not branch:
         return False, "github_branch is required"
+
+    release_channel = str(payload.get("release_channel", "")).strip()
+    if release_channel not in {"stable", "dev"}:
+        return False, "release_channel must be stable or dev"
 
     interval_raw = payload.get("sync_interval_minutes")
     try:
@@ -431,6 +436,7 @@ def set_options():
     candidate = {
         "github_repository": str(payload.get("github_repository", "")).strip(),
         "github_branch": str(payload.get("github_branch", "main")).strip() or "main",
+        "release_channel": str(payload.get("release_channel", "stable")).strip() or "stable",
         "github_token": str(payload.get("github_token", "")).strip() or _merge_options().get("github_token", ""),
         "github_client_id": str(
             payload.get("github_client_id", _merge_options().get("github_client_id", DEFAULT_OAUTH_CLIENT_ID))
