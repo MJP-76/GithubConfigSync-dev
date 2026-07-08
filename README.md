@@ -23,10 +23,10 @@ If you find this project useful, and would like to help support its continued de
 ## Version Tracker
 
 <!-- VERSION:START -->
-- Integration version: `0.2.44-dev`
-- App version: `0.2.44-dev`
+- Integration version: `0.2.45-dev`
+- App version: `0.2.45-dev`
 - Channel: `dev`
-- Release tag: `v0.2.44-dev`
+- Release tag: `v0.2.45-dev`
 <!-- VERSION:END -->
 
 To sync versions across integration/app/runtime/docs automatically:
@@ -50,6 +50,7 @@ Security hardening is part of the current release: private repos only, sensitive
 - Keeps 7 GitHub version snapshots by default.
 - Both values are configurable in the app UI.
 - Dev work now lives in the `GithubConfigSync-dev` fork repo; the main repo stays on stable releases.
+- Release track split: `MJP-76/GithubConfigSync` publishes stable releases, and `MJP-76/GithubConfigSync-dev` publishes dev prereleases.
 
 ## Architecture
 

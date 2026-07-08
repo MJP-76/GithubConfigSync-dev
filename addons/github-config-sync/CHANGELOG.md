@@ -4,6 +4,10 @@
 
 - Main repo is now stable-only; dev work continues in the `GithubConfigSync-dev` fork repo.
 
+## 0.2.45-dev
+
+- Fixed the add-on UI initialization bug caused by the confirmation modal helper nesting.
+
 ## 0.2.44-dev
 
 - Added confirmation prompts for Clean Upload and Clean Repo Skeleton, and removed the in-UI release suggestion notice.
