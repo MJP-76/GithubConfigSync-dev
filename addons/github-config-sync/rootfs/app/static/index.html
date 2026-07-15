@@ -268,7 +268,7 @@
             <span id="devRepoVersion" class="progress-value">Loading...</span>
           </div>
           <div class="version-item">
-            <span class="progress-label">Current add-on</span>
+            <span class="progress-label">Current versions</span>
             <span id="currentRepoVersion" class="progress-value">Loading...</span>
           </div>
         </div>
@@ -766,7 +766,12 @@
         el.stableRepoVersion.textContent = (data.repo_versions && data.repo_versions.stable) || "unknown";
         el.rcRepoVersion.textContent = (data.repo_versions && data.repo_versions.rc) || "unknown";
         el.devRepoVersion.textContent = (data.repo_versions && data.repo_versions.dev) || "unknown";
-        el.currentRepoVersion.textContent = (data.repo_versions && data.repo_versions.current) || data.version || "unknown";
+        const versionParts = [
+          `Integration: ${(data.repo_versions && data.repo_versions.integration) || data.version || "unknown"}`,
+          `Add-on: ${(data.repo_versions && data.repo_versions.addon) || data.version || "unknown"}`,
+          `UI: ${(data.repo_versions && data.repo_versions.ui) || data.version || "unknown"}`,
+        ];
+        el.currentRepoVersion.textContent = versionParts.join(" | ");
         setStatus(`${(data.state && data.state.status) || "idle"}`, !(data.state && data.state.status === "error"));
       }
 
