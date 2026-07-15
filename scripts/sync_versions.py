@@ -34,11 +34,9 @@ def _bump_patch(version: str) -> str:
 
 
 def _channelize(version: str, channel: str) -> str:
-    if channel == "stable":
-        return version
-    if channel == "rc":
-        return version
-    return f"{_bump_patch(version)}-dev"
+    if channel == "dev":
+        return _bump_patch(version)
+    return version
 
 
 def _read(path: Path) -> str:
@@ -106,7 +104,7 @@ def main() -> int:
         "--channel",
         choices=["stable", "rc", "dev"],
         required=True,
-        help="Release channel; rc uses the base version and dev bumps the patch then appends -dev.",
+        help="Release channel; stable and rc use the base version and dev bumps the patch.",
     )
     parser.add_argument(
         "--check",
