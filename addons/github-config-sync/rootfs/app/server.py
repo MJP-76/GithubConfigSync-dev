@@ -15,8 +15,8 @@ from sync.github_client import GitHubClient
 from sync.hashing import IGNORE_PATTERNS
 
 APP_VERSION = "0.5.4"
-STABLE_REPO_VERSION = "0.5.3"
-RC_REPO_VERSION = "0.5.3"
+STABLE_REPO_VERSION = None
+RC_REPO_VERSION = None
 DEV_REPO_VERSION = APP_VERSION
 APP_PORT = 8099
 DEFAULT_OAUTH_CLIENT_ID = "Ov23li2ycCraodta6WCU"
