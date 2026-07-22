@@ -78,6 +78,12 @@ DEFAULT_STATE: dict[str, Any] = {
 }
 
 
+def _display_repo_version(value: str | None, fallback: str) -> str:
+    if isinstance(value, str) and value.strip():
+        return value
+    return fallback
+
+
 def _load_json(path: Path, fallback: dict[str, Any]) -> dict[str, Any]:
     if not path.exists():
         return dict(fallback)
@@ -525,9 +531,9 @@ def get_status():
             "auth": _auth_diagnostics(options),
             "version": APP_VERSION,
             "repo_versions": {
-                "stable": STABLE_REPO_VERSION,
-                "rc": RC_REPO_VERSION,
-                "dev": DEV_REPO_VERSION,
+                "stable": _display_repo_version(STABLE_REPO_VERSION, "n/a"),
+                "rc": _display_repo_version(RC_REPO_VERSION, "n/a"),
+                "dev": _display_repo_version(DEV_REPO_VERSION, APP_VERSION),
                 "current": APP_VERSION,
             },
             "token_health": _token_health(options),
