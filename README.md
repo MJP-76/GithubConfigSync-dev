@@ -35,7 +35,7 @@ Repos created by the add-on are marked internally so destructive clean actions a
 To sync versions across integration/app/runtime/docs automatically:
 
 ```bash
-python3 scripts/sync_versions.py --integration 0.3.3 --addon 0.3.3 --channel dev
+python3 scripts/sync_versions.py --integration 1.0.0 --addon 1.0.0 --channel stable
 ```
 
 ## Home Assistant App (Web UI)
