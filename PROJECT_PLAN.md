@@ -6,7 +6,7 @@ Use this as the single source of truth for **where we are**, **what is next**, a
 
 ## Status Snapshot
 
-- **Current milestone:** `v0.5.3-stable — stable release`
+- **Current milestone:** `v0.3.3 — dev release prep`
 - **Last updated:** 2026-07-14
 - **Track:** Home Assistant Integration + Home Assistant Add-on (Ingress Web UI)
 - **Latest shipped improvements:** autosave in the UI, bundled starter files, fast git-tree Clean Repo, and dry-run feedback in manual sync
@@ -16,10 +16,10 @@ Use this as the single source of truth for **where we are**, **what is next**, a
 - **Versioning rule:** keep numeric `x.y.z` versions for integration/add-on, and publish channel tags as `vX.Y.Z-stable`, `vX.Y.Z-rc`, and `vX.Y.Z-dev`.
 
 <!-- VERSION:START -->
-- Integration version: `0.5.4`
-- Add-on version: `0.5.4`
-- Channel: `stable`
-- Release tag: `v0.5.4-stable`
+- Integration version: `0.5.5`
+- Add-on version: `0.5.5`
+- Channel: `dev`
+- Release tag: `v0.5.5-dev`
 <!-- VERSION:END -->
 
 ---

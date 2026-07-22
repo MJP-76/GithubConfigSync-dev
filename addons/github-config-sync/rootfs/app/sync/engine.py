@@ -5,6 +5,7 @@ import datetime as dt
 from typing import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+from .errors import SyncError
 from .github_client import GitHubClient
 from .hashing import build_hash_index, diff_hash_indexes, is_ignored
 from .models import SyncConfig, SyncPlan, SyncResult
@@ -128,7 +129,7 @@ class SyncEngine:
         )
 
     def clean_remote_tree(self) -> None:
-        self._delete_remote_tree("")
+        self._wipe_remote_repository()
 
     def restore_repo_skeleton(self) -> None:
         self._restore_repo_skeleton()
@@ -246,6 +247,22 @@ class SyncEngine:
                 sha=sha,
                 message=f"sync: delete {item_path}",
             )
+
+    def _wipe_remote_repository(self) -> None:
+        head_sha = self._github.get_branch_head_sha()
+        empty_tree = self._github.create_git_tree(tree=[])
+        tree_sha = empty_tree.get("sha")
+        if not isinstance(tree_sha, str) or not tree_sha:
+            raise SyncError("GitHub empty tree response was incomplete")
+        commit = self._github.create_git_commit(
+            message="sync: fast clean remote tree",
+            tree_sha=tree_sha,
+            parent_sha=head_sha,
+        )
+        commit_sha = commit.get("sha")
+        if not isinstance(commit_sha, str) or not commit_sha:
+            raise SyncError("GitHub commit response was incomplete")
+        self._github.update_branch_ref(commit_sha)
 
     def _delete_remote_tree_except(self, root: str, excluded_names: set[str]) -> None:
         for item in self._github.list_directory_contents(root):

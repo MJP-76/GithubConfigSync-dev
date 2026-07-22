@@ -294,7 +294,7 @@ class SyncEngineTests(unittest.TestCase):
             ]
         )
 
-    def test_clean_remote_tree_wipes_root_tree(self) -> None:
+    def test_delete_remote_tree_wipes_nested_tree(self) -> None:
         config = SyncConfig(
             repository="owner/repo",
             branch="main",
@@ -317,7 +317,7 @@ class SyncEngineTests(unittest.TestCase):
 
         with patch("sync.engine.GitHubClient", return_value=fake_client):
             engine = SyncEngine(config, previous_hash_index={})
-            engine.clean_remote_tree()
+            engine._delete_remote_tree("")
 
         fake_client.list_directory_contents.assert_any_call("")
         fake_client.delete_content.assert_any_call(
@@ -331,7 +331,7 @@ class SyncEngineTests(unittest.TestCase):
             message="sync: delete root.yaml",
         )
 
-    def test_clean_remote_tree_only_wipes_root_tree(self) -> None:
+    def test_clean_remote_tree_uses_fast_git_tree_reset(self) -> None:
         config = SyncConfig(
             repository="owner/repo",
             branch="main",
@@ -345,36 +345,19 @@ class SyncEngineTests(unittest.TestCase):
         fake_client.get_branch_head_sha.return_value = "headsha"
         fake_client.create_git_tree.return_value = {"sha": "treesha"}
         fake_client.create_git_commit.return_value = {"sha": "commitsha"}
-        fake_client.list_directory_contents.side_effect = [
-            [
-                {"type": "file", "name": "README.md", "path": "README.md", "sha": "readmesha"},
-                {"type": "dir", "name": "custom_components", "path": "custom_components"},
-                {"type": "dir", "name": "addons", "path": "addons"},
-                {"type": "dir", "name": ".github", "path": ".github"},
-                {"type": "file", "name": "root.yaml", "path": "root.yaml", "sha": "rootsha"},
-            ],
-            [
-                {"type": "file", "name": "nested.yaml", "path": "custom_components/nested.yaml", "sha": "nestedsha"},
-            ],
-            [],
-            [],
-        ]
 
         with patch("sync.engine.GitHubClient", return_value=fake_client):
             engine = SyncEngine(config, previous_hash_index={})
             engine.clean_remote_tree()
 
-        fake_client.list_directory_contents.assert_any_call("")
-        fake_client.delete_content.assert_any_call(
-            path="README.md",
-            sha="readmesha",
-            message="sync: delete README.md",
+        fake_client.create_git_tree.assert_called_once_with(tree=[])
+        fake_client.create_git_commit.assert_called_once_with(
+            message="sync: fast clean remote tree",
+            tree_sha="treesha",
+            parent_sha="headsha",
         )
-        fake_client.delete_content.assert_any_call(
-            path="custom_components/nested.yaml",
-            sha="nestedsha",
-            message="sync: delete custom_components/nested.yaml",
-        )
+        fake_client.update_branch_ref.assert_called_once_with("commitsha")
+        fake_client.delete_content.assert_not_called()
 
     def test_restore_repo_skeleton_uses_app_root_assets(self) -> None:
         config = SyncConfig(
