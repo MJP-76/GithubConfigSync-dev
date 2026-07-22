@@ -32,6 +32,7 @@ HASH_INDEX_PATH = DATA_DIR / "hash_index.json"
 DEVICE_FLOW_PATH = DATA_DIR / "device_flow.json"
 STATIC_DIR = Path("/app/static")
 CONFIG_ROOT = Path("/config")
+CHANGELOG_PATH = Path(__file__).resolve().parents[2] / "CHANGELOG.md"
 
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
@@ -247,6 +248,21 @@ def _sanitized_log_tail(limit: int = 4000) -> str:
     if not LOG_PATH.exists():
         return ""
     return LOG_PATH.read_text(encoding="utf-8")[-limit:]
+
+
+def _read_changelog_entries(limit: int = 5) -> list[str]:
+    if not CHANGELOG_PATH.exists():
+        return []
+    entries: list[str] = []
+    for raw_line in CHANGELOG_PATH.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or line in {"<!-- VERSION:START -->", "<!-- VERSION:END -->"}:
+            continue
+        if line.startswith("- "):
+            entries.append(line[2:].strip())
+            if len(entries) >= limit:
+                break
+    return entries
 
 
 def _diagnostics_bundle() -> dict[str, Any]:
@@ -594,6 +610,11 @@ def save_ignore_recommendations():
 @app.get("/api/diagnostics")
 def get_diagnostics():
     return jsonify(_diagnostics_bundle())
+
+
+@app.get("/api/changelog")
+def get_changelog():
+    return jsonify({"ok": True, "entries": _read_changelog_entries(5)})
 
 
 @app.get("/api/auth/device")

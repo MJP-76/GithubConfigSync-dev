@@ -181,6 +181,13 @@ class GitHubClient:
             raise SyncError("GitHub ref response was incomplete")
         return object_payload["sha"]
 
+    def get_commit_tree_sha(self, commit_sha: str) -> str:
+        payload = self._request_json("GET", f"{self._base}/git/commits/{urllib.parse.quote(commit_sha, safe='')}")
+        tree_payload = payload.get("tree")
+        if not isinstance(tree_payload, dict) or not isinstance(tree_payload.get("sha"), str):
+            raise SyncError("GitHub commit tree response was incomplete")
+        return tree_payload["sha"]
+
     def create_git_tree(self, base_tree: str | None = None, tree: list[dict[str, Any]] | None = None) -> dict[str, Any]:
         payload: dict[str, Any] = {}
         if base_tree:

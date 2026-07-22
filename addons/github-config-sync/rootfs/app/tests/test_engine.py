@@ -331,7 +331,7 @@ class SyncEngineTests(unittest.TestCase):
             message="sync: delete root.yaml",
         )
 
-    def test_clean_remote_tree_uses_fast_git_tree_reset(self) -> None:
+    def test_clean_remote_tree_uses_git_tree_delete_flow(self) -> None:
         config = SyncConfig(
             repository="owner/repo",
             branch="main",
@@ -343,6 +343,14 @@ class SyncEngineTests(unittest.TestCase):
         )
         fake_client = MagicMock()
         fake_client.get_branch_head_sha.return_value = "headsha"
+        fake_client.get_commit_tree_sha.return_value = "basetree"
+        fake_client.list_directory_contents.side_effect = [
+            [
+                {"type": "file", "path": "root.yaml", "sha": "rootsha"},
+                {"type": "dir", "path": "nested", "name": "nested"},
+            ],
+            [{"type": "file", "path": "nested/inside.yaml", "sha": "innersha"}],
+        ]
         fake_client.create_git_tree.return_value = {"sha": "treesha"}
         fake_client.create_git_commit.return_value = {"sha": "commitsha"}
 
@@ -350,14 +358,15 @@ class SyncEngineTests(unittest.TestCase):
             engine = SyncEngine(config, previous_hash_index={})
             engine.clean_remote_tree()
 
-        fake_client.create_git_tree.assert_called_once_with(tree=[])
+        fake_client.get_branch_head_sha.assert_called_once()
+        fake_client.get_commit_tree_sha.assert_called_once_with("headsha")
+        fake_client.create_git_tree.assert_called_once()
         fake_client.create_git_commit.assert_called_once_with(
             message="sync: fast clean remote tree",
             tree_sha="treesha",
             parent_sha="headsha",
         )
         fake_client.update_branch_ref.assert_called_once_with("commitsha")
-        fake_client.delete_content.assert_not_called()
 
     def test_restore_repo_skeleton_uses_app_root_assets(self) -> None:
         config = SyncConfig(

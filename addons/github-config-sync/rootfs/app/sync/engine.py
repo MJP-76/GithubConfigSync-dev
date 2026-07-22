@@ -129,7 +129,11 @@ class SyncEngine:
         )
 
     def clean_remote_tree(self) -> None:
-        self._wipe_remote_repository()
+        try:
+            self._wipe_remote_repository()
+            return
+        except SyncError:
+            self._delete_remote_tree("")
 
     def restore_repo_skeleton(self) -> None:
         self._restore_repo_skeleton()
@@ -230,6 +234,26 @@ class SyncEngine:
                 sha=sha,
             )
 
+    def _wipe_remote_repository(self) -> None:
+        head_sha = self._github.get_branch_head_sha()
+        base_tree_sha = self._github.get_commit_tree_sha(head_sha)
+        deletions = self._collect_remote_deletions("")
+        if not deletions:
+            deletions = [{"path": ".keep", "mode": "100644", "type": "blob", "sha": None}]
+        empty_tree = self._github.create_git_tree(base_tree=base_tree_sha, tree=deletions)
+        tree_sha = empty_tree.get("sha")
+        if not isinstance(tree_sha, str) or not tree_sha:
+            raise SyncError("GitHub empty tree response was incomplete")
+        commit = self._github.create_git_commit(
+            message="sync: fast clean remote tree",
+            tree_sha=tree_sha,
+            parent_sha=head_sha,
+        )
+        commit_sha = commit.get("sha")
+        if not isinstance(commit_sha, str) or not commit_sha:
+            raise SyncError("GitHub commit response was incomplete")
+        self._github.update_branch_ref(commit_sha)
+
     def _delete_remote_tree(self, root: str) -> None:
         for item in self._github.list_directory_contents(root):
             item_type = item.get("type")
@@ -248,21 +272,18 @@ class SyncEngine:
                 message=f"sync: delete {item_path}",
             )
 
-    def _wipe_remote_repository(self) -> None:
-        head_sha = self._github.get_branch_head_sha()
-        empty_tree = self._github.create_git_tree(tree=[])
-        tree_sha = empty_tree.get("sha")
-        if not isinstance(tree_sha, str) or not tree_sha:
-            raise SyncError("GitHub empty tree response was incomplete")
-        commit = self._github.create_git_commit(
-            message="sync: fast clean remote tree",
-            tree_sha=tree_sha,
-            parent_sha=head_sha,
-        )
-        commit_sha = commit.get("sha")
-        if not isinstance(commit_sha, str) or not commit_sha:
-            raise SyncError("GitHub commit response was incomplete")
-        self._github.update_branch_ref(commit_sha)
+    def _collect_remote_deletions(self, root: str) -> list[dict[str, object]]:
+        deletions: list[dict[str, object]] = []
+        for item in self._github.list_directory_contents(root):
+            item_type = item.get("type")
+            item_path = item.get("path")
+            if not isinstance(item_path, str):
+                continue
+            if item_type == "dir":
+                deletions.extend(self._collect_remote_deletions(item_path))
+                continue
+            deletions.append({"path": item_path, "mode": "100644", "type": "blob", "sha": None})
+        return deletions
 
     def _delete_remote_tree_except(self, root: str, excluded_names: set[str]) -> None:
         for item in self._github.list_directory_contents(root):

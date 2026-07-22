@@ -277,6 +277,37 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(status["repo_versions"]["dev"], server.DEV_REPO_VERSION)
         self.assertEqual(diagnostics["options"]["github_token"], "********")
 
+    def test_changelog_endpoint_returns_latest_five_entries(self) -> None:
+        changelog_path = server.CHANGELOG_PATH
+        original = changelog_path.read_text(encoding="utf-8") if changelog_path.exists() else None
+        self.addCleanup(
+            lambda: changelog_path.write_text(original, encoding="utf-8") if original is not None else changelog_path.unlink(missing_ok=True)
+        )
+        changelog_path.write_text(
+            "\n".join(
+                [
+                    "# Changelog",
+                    "",
+                    "## Unreleased",
+                    "",
+                    "- one",
+                    "- two",
+                    "- three",
+                    "- four",
+                    "- five",
+                    "- six",
+                ]
+            ),
+            encoding="utf-8",
+        )
+
+        response = self.client.get("/api/changelog")
+        body = response.get_json()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(body["ok"])
+        self.assertEqual(body["entries"], ["one", "two", "three", "four", "five"])
+
     def test_create_repository_uses_default_name_when_blank(self) -> None:
         self._write_options({"github_branch": "main", "github_token": "gho_x"})
         with patch("sync.github_client.GitHubClient.create_repository") as create_repo:
