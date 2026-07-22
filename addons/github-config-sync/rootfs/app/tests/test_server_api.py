@@ -516,14 +516,16 @@ class ServerApiTests(unittest.TestCase):
         with patch("server.SyncEngine") as engine_cls:
             engine = engine_cls.return_value
             engine.clean_remote_tree.return_value = None
+            engine._github.write_repo_marker.return_value = {"ok": True}
             response = self.client.post("/api/sync/clean-repo")
 
         body = response.get_json()
         self.assertEqual(response.status_code, 200)
         self.assertTrue(body["ok"])
-        self.assertEqual(body["result"], "Clean repo completed. Remote repo skeleton restored.")
+        self.assertEqual(body["result"], "Clean repo completed. Remote repo fully reset and skeleton restored.")
         engine.clean_remote_tree.assert_called_once()
         engine.restore_repo_skeleton.assert_called_once()
+        engine._github.write_repo_marker.assert_called_once()
 
     def test_clean_repo_rejects_non_addon_repository_with_files(self) -> None:
         self._write_options(
@@ -547,6 +549,7 @@ class ServerApiTests(unittest.TestCase):
         self.assertIn("not created by this add-on", body["error"])
         engine.clean_remote_tree.assert_not_called()
         engine.restore_repo_skeleton.assert_not_called()
+        engine._github.write_repo_marker.assert_not_called()
 
     def test_clean_upload_allows_empty_existing_repository(self) -> None:
         self._write_options(
@@ -564,6 +567,7 @@ class ServerApiTests(unittest.TestCase):
             engine = engine_cls.return_value
             engine._github.list_directory_contents.return_value = []
             engine._github.probe_repository.return_value = (True, "Repository probe succeeded")
+            engine._github.write_repo_marker.return_value = {"ok": True}
             engine.clean_plan.return_value = (
                 unittest.mock.MagicMock(
                     added=["one.txt"],
@@ -582,6 +586,7 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(body["ok"])
         engine.clean_remote_tree.assert_called_once()
+        engine._github.write_repo_marker.assert_called_once()
 
     def test_manual_sync_endpoint_uses_retention_days(self) -> None:
         (self._config_root / "one.txt").write_text("one", encoding="utf-8")

@@ -23,13 +23,13 @@ If you find this project useful, and would like to help support its continued de
 ## Version Tracker
 
 <!-- VERSION:START -->
-- Integration version: `0.5.7`
-- Add-on version: `0.5.7`
+- Integration version: `0.5.8`
+- Add-on version: `0.5.8`
 - Channel: `stable`
-- Release tag: `v0.5.7`
+- Release tag: `v0.5.8`
 <!-- VERSION:END -->
 
-Stable, RC, and dev now follow separate numeric lanes in the UI: stable `0.5.0`, RC `0.5.5`, and dev `0.5.7`.
+Stable, RC, and dev now follow separate numeric lanes in the UI: stable `0.5.0`, RC `0.5.5`, and dev `0.5.8`.
 Repos created by the add-on are marked internally so destructive clean actions and the repo picker can ignore unsafe existing repositories.
 
 To sync versions across integration/app/runtime/docs automatically:

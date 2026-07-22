@@ -14,10 +14,10 @@ from sync.errors import SyncError
 from sync.github_client import GitHubClient
 from sync.hashing import IGNORE_PATTERNS
 
-APP_VERSION = "0.5.7"
+APP_VERSION = "0.5.8"
 STABLE_REPO_VERSION = "0.5.0"
 RC_REPO_VERSION = "0.5.5"
-DEV_REPO_VERSION = "0.5.7"
+DEV_REPO_VERSION = "0.5.8"
 APP_PORT = 8099
 DEFAULT_OAUTH_CLIENT_ID = "Ov23li2ycCraodta6WCU"
 DEFAULT_NEW_REPO_NAME = "ha-github-config-sync"
@@ -67,6 +67,12 @@ def _repo_safety_state(engine: SyncEngine) -> tuple[bool, str]:
     if not contents:
         return True, "Repository is empty"
     return False, "Repository was not created by this add-on and is not empty"
+
+
+def _ensure_repo_marker(engine: SyncEngine, repository: str) -> None:
+    engine._github.write_repo_marker(  # pylint: disable=protected-access
+        {"created_by": "github-config-sync-addon", "repository": repository}
+    )
 
 DEFAULT_STATE: dict[str, Any] = {
     "status": "idle",
@@ -366,6 +372,8 @@ def _run_sync(sync_config: SyncConfig, clean_upload: bool = False) -> tuple[int,
             raise SyncError(friendly_message)
 
     result = engine.run(plan)
+    if not sync_config.dry_run:
+        _ensure_repo_marker(engine, sync_config.repository)
     _save_json(HASH_INDEX_PATH, current_hash_index)
     return 200, scan, result.message
 
@@ -971,6 +979,7 @@ def trigger_clean_sync():
                 _append_log(f"Repository probe failed: {friendly_message}")
                 return jsonify({"ok": False, "error": friendly_message, "state": state}), 502
         result = engine.run(plan)
+        _ensure_repo_marker(engine, sync_config.repository)
         _save_json(HASH_INDEX_PATH, current_hash_index)
     except SyncError as err:
         state = _save_state(
@@ -1027,6 +1036,7 @@ def trigger_clean_repo():
             return jsonify({"ok": False, "error": reason}), 400
         engine.clean_remote_tree()
         engine.restore_repo_skeleton()
+        _ensure_repo_marker(engine, sync_config.repository)
     except SyncError as err:
         state = _save_state(
             {
@@ -1043,16 +1053,16 @@ def trigger_clean_repo():
         {
             "status": "ok",
             "last_success": dt.datetime.now(dt.timezone.utc).isoformat(),
-            "last_result": "Clean repo completed. Remote repo skeleton restored.",
+            "last_result": "Clean repo completed. Remote repo fully reset and skeleton restored.",
             "last_scan": None,
             "last_error": None,
         }
     )
-    _append_log("Clean repo completed and skeleton restored")
+    _append_log("Clean repo completed: remote tree wiped, skeleton restored, marker refreshed")
     return jsonify(
         {
             "ok": True,
-            "result": "Clean repo completed. Remote repo skeleton restored.",
+            "result": "Clean repo completed. Remote repo fully reset and skeleton restored.",
             "state": state,
         }
     )

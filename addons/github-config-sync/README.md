@@ -26,10 +26,10 @@ If you find this project useful, and would like to help support its continued de
 ## Version Tracker
 
 <!-- VERSION:START -->
-- Integration version: `0.5.7`
-- Add-on version: `0.5.7`
+- Integration version: `0.5.8`
+- Add-on version: `0.5.8`
 - Channel: `stable`
-- Release tag: `v0.5.7`
+- Release tag: `v0.5.8`
 <!-- VERSION:END -->
 
 ## What it provides
@@ -54,7 +54,7 @@ If you find this project useful, and would like to help support its continued de
 - Live runs also write versioned snapshots under `versions/<timestamp>/...` (parallelized uploads) and keep the most recent 7 by default.
 - Runtime state is persisted in `/data/state.json`, `/data/hash_index.json`, `/data/device_flow.json`, and `/data/sync.log`.
 - The stable local API contract is `/api/health`, `/api/status`, `/api/sync`, and `/api/diagnostics`.
-Stable, RC, and dev now use separate numeric lanes in the UI: stable `0.5.0`, RC `0.5.5`, and dev `0.5.7`.
+- Stable, RC, and dev now use separate numeric lanes in the UI: stable `0.5.0`, RC `0.5.5`, and dev `0.5.8`.
 The add-on writes an internal repo marker on newly created repositories so clean actions and the repo picker only target safe repos.
 
 ## Runbook
