@@ -49,7 +49,7 @@ If you find this project useful, and would like to help support its continued de
 - The mount-point checklist lets you include or exclude standard Home Assistant folders, and the recommended .gitignore keeps the ignore list aligned.
 - `dry_run=true` stops after planning and returns the counts that would be applied for manual actions. A separate scheduled-sync checkbox can override dry run for automated runs.
 - `dry_run=false` probes the GitHub repository first, then performs upserts and deletes with the GitHub Contents API. Remote deletes never remove local files.
-- **Clean Repo** always runs live, empties the remote repo, and restores the starter files in the same step.
+- **Clean Repo** always runs live, empties the remote repo with a fast git-tree reset, and restores the starter files in the same step.
 - Repository creation defaults to `ha-github-config-sync` and private visibility, with an optional public visibility choice.
 - Live runs also write versioned snapshots under `versions/<timestamp>/...` (parallelized uploads) and keep the most recent 7 by default.
 - Runtime state is persisted in `/data/state.json`, `/data/hash_index.json`, `/data/device_flow.json`, and `/data/sync.log`.
@@ -76,7 +76,7 @@ Stable and RC releases share the same main repository version line; RC is the pr
 1. Confirm the repository is reachable with the saved token.
 2. Confirm the branch name is correct for the target repo.
 3. Disable `dry_run`.
-4. Start a sync from the UI, or use **Clean Upload** to force a full re-upload plus cleanup of remote extras. **Clean Repo** empties the remote repo and restores the starter files in one live step. If scheduled sync should ignore dry run, enable the scheduled override checkbox first.
+4. Start a sync from the UI, or use **Clean Upload** to force a full re-upload plus cleanup of remote extras. **Clean Repo** empties the remote repo with a fast git-tree reset and restores the starter files in one live step. If scheduled sync should ignore dry run, enable the scheduled override checkbox first.
 5. Confirm the probe succeeds and the final result reports upserts, deletes, and skips.
 
 ### Diagnostics bundle
