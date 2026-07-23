@@ -751,6 +751,9 @@
           if (strict) {
             setStatus(`Loaded ${cachedRepos.length} add-on repositories`);
           }
+          if (!strict && cachedRepos.length === 0) {
+            return loadManagedRepositories(true);
+          }
         } catch (error) {
           cachedRepos = [];
           renderRepoPicker(cachedRepos);

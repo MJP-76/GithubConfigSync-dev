@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.17
+
+- Startup now falls back to a supported-repo refresh if the cache is empty.
+
 ## 1.0.16
 
 - Removed the all-repos button and fixed the supported-repo picker refresh path.
