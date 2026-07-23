@@ -14,9 +14,9 @@ from sync.errors import SyncError
 from sync.github_client import GitHubClient
 from sync.hashing import IGNORE_PATTERNS
 
-APP_VERSION = "1.0.6"
+APP_VERSION = "1.0.7"
 STABLE_REPO_VERSION = "1.0.0"
-DEV_REPO_VERSION = "1.0.6"
+DEV_REPO_VERSION = "1.0.7"
 APP_PORT = 8099
 DEFAULT_OAUTH_CLIENT_ID = "Ov23li2ycCraodta6WCU"
 DEFAULT_NEW_REPO_NAME = "ha-github-config-sync"
@@ -776,29 +776,6 @@ def list_repos():
     except SyncError as err:
         return jsonify({"ok": False, "error": str(err)}), 400
 
-    filtered_repos: list[dict[str, Any]] = []
-    for repo in repos:
-        full_name = str(repo.get("full_name", "")).strip()
-        if not full_name:
-            continue
-        safety_client = GitHubClient(
-            repository=full_name,
-            branch=str(repo.get("default_branch", "main")).strip() or "main",
-            token=str(options.get("github_token", "")).strip(),
-        )
-        try:
-            contents = safety_client.list_directory_contents()
-        except SyncError as err:
-            _append_log(f"Skipping repository {full_name}: {err}")
-            continue
-        if not isinstance(contents, list):
-            contents = []
-        marker_present = any(
-            isinstance(item.get("path"), str) and item["path"] == ADDON_REPO_MARKER_PATH for item in contents
-        )
-        if marker_present or not contents:
-            filtered_repos.append(repo)
-
     return jsonify(
         {
             "ok": True,
@@ -808,7 +785,8 @@ def list_repos():
                     "full_name": str(repo.get("full_name", "")),
                     "private": bool(repo.get("private", False)),
                 }
-                for repo in filtered_repos
+                for repo in repos
+                if str(repo.get("full_name", "")).strip()
             ],
         }
     )
