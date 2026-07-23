@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.25
+
+- Added a Select All toggle to the grouped ignore suggestions UI.
+
 ## 1.0.24
 
 - Default-selected ignore recommendations now start checked when no local `.gitignore` exists.
