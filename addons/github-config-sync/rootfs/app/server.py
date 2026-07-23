@@ -14,9 +14,9 @@ from sync.errors import SyncError
 from sync.github_client import GitHubClient
 from sync.hashing import IGNORE_PATTERNS
 
-APP_VERSION = "1.0.23"
+APP_VERSION = "1.0.24"
 STABLE_REPO_VERSION = "1.0.0"
-DEV_REPO_VERSION = "1.0.23"
+DEV_REPO_VERSION = "1.0.24"
 APP_PORT = 8099
 DEFAULT_OAUTH_CLIENT_ID = "Ov23li2ycCraodta6WCU"
 DEFAULT_NEW_REPO_NAME = "ha-github-config-sync"
@@ -659,7 +659,8 @@ def get_status():
 def get_ignore_recommendations():
     gitignore_path = CONFIG_ROOT / ".gitignore"
     current = set()
-    if gitignore_path.exists():
+    local_exists = gitignore_path.exists()
+    if local_exists:
         for line in gitignore_path.read_text(encoding="utf-8").splitlines():
             stripped = line.strip()
             if stripped and not stripped.startswith("#"):
@@ -667,8 +668,8 @@ def get_ignore_recommendations():
     return jsonify(
         {
             "ok": True,
-            "local_gitignore": gitignore_path.exists(),
-            "patterns": [{"pattern": pattern, "selected": pattern in current} for pattern in IGNORE_PATTERNS],
+            "local_gitignore": local_exists,
+            "patterns": [{"pattern": pattern, "selected": (pattern in current) or not local_exists} for pattern in IGNORE_PATTERNS],
         }
     )
 

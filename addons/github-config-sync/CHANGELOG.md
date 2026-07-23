@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.24
+
+- Default-selected ignore recommendations now start checked when no local `.gitignore` exists.
+
 ## 1.0.23
 
 - Added a Select All checkbox for the ignore recommendations list.
