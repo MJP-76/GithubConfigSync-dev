@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.8
+
+- Cleared stale startup sync state on app boot.
+- Removed the repo list contents probe so the picker no longer burns GitHub rate limit on load.
+
+## 1.0.7
+
+- Fixed the stale running upload state so rebuilds clear canceled runs.
+- Added a retry for DELETE content requests when GitHub returns a stale SHA conflict.
+
 ## 1.0.6
 
 - Fixed startup flicker by only showing Ready after startup loads finish successfully.
