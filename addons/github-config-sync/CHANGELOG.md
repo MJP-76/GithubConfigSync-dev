@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.13
+
+- Published a fresh dev release for the repo picker fix.
+
 ## 1.0.12
 
 - Restored a safe repo picker filter that only shows add-on-style repositories without probing repo contents.
