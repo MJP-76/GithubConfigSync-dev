@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.15
+
+- Startup now loads cached supported repos, and the manual button refreshes the supported repo list.
+
 ## 1.0.14
 
 - Added a startup repo list plus an on-demand add-on repo filter to avoid probing on load.

@@ -14,9 +14,9 @@ from sync.errors import SyncError
 from sync.github_client import GitHubClient
 from sync.hashing import IGNORE_PATTERNS
 
-APP_VERSION = "1.0.14"
+APP_VERSION = "1.0.15"
 STABLE_REPO_VERSION = "1.0.0"
-DEV_REPO_VERSION = "1.0.14"
+DEV_REPO_VERSION = "1.0.15"
 APP_PORT = 8099
 DEFAULT_OAUTH_CLIENT_ID = "Ov23li2ycCraodta6WCU"
 DEFAULT_NEW_REPO_NAME = "ha-github-config-sync"
@@ -30,6 +30,7 @@ STATE_PATH = DATA_DIR / "state.json"
 LOG_PATH = DATA_DIR / "sync.log"
 HASH_INDEX_PATH = DATA_DIR / "hash_index.json"
 DEVICE_FLOW_PATH = DATA_DIR / "device_flow.json"
+MANAGED_REPOS_PATH = DATA_DIR / "managed_repos.json"
 STATIC_DIR = Path("/app/static")
 CONFIG_ROOT = Path("/config")
 CHANGELOG_PATH = Path(__file__).resolve().parent / "CHANGELOG.md"
@@ -317,6 +318,31 @@ def _read_changelog_entries(limit: int = 5) -> list[str]:
             if len(entries) >= limit:
                 break
     return entries
+
+
+def _load_managed_repos() -> list[dict[str, Any]]:
+    data = _load_json(MANAGED_REPOS_PATH, [])
+    if not isinstance(data, list):
+        return []
+    repos: list[dict[str, Any]] = []
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        full_name = str(item.get("full_name", "")).strip()
+        if not full_name:
+            continue
+        repos.append(
+            {
+                "name": str(item.get("name", "")).strip(),
+                "full_name": full_name,
+                "private": bool(item.get("private", False)),
+            }
+        )
+    return repos
+
+
+def _save_managed_repos(repos: list[dict[str, Any]]) -> None:
+    _save_json(MANAGED_REPOS_PATH, repos)
 
 
 def _diagnostics_bundle() -> dict[str, Any]:
@@ -849,7 +875,13 @@ def list_managed_repos():
                 }
             )
 
+    _save_managed_repos(managed)
     return jsonify({"ok": True, "repos": managed})
+
+
+@app.get("/api/repos/cached")
+def list_cached_managed_repos():
+    return jsonify({"ok": True, "repos": _load_managed_repos()})
 
 
 @app.post("/api/repos/create")
@@ -881,6 +913,20 @@ def create_repo():
 
     merged = _merge_options()
     merged["github_repository"] = str(repo.get("full_name", "")).strip()
+    _save_managed_repos(
+        [
+            *[
+                item
+                for item in _load_managed_repos()
+                if str(item.get("full_name", "")).strip() != merged["github_repository"]
+            ],
+            {
+                "name": str(repo.get("name", "")).strip(),
+                "full_name": merged["github_repository"],
+                "private": bool(repo.get("private", True)),
+            },
+        ]
+    )
     _save_json(WEBUI_OPTIONS_PATH, merged)
     _append_log(f"Created repository {merged['github_repository']} from web UI")
     return jsonify(
