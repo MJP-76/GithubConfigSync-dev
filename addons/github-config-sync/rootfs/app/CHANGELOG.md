@@ -6,6 +6,7 @@
 
 ## Unreleased
 
+- Release 1.0.27: dev repo release to pick up the live activity cleanup.
 - Added repo marker support so clean actions can verify add-on-managed repositories.
 - Filtered unsafe repositories out of the repo picker.
 - Made Clean Repo do a full remote reset, then restore the skeleton and refresh the marker.
