@@ -455,7 +455,7 @@
               <p style="font-size: 0.8rem; color: var(--muted); margin: 4px 0 10px 0">
                 Releases are tagged with dd/mm/yy hh:mm:ss format and auto-pruned to the retention count below.
               </p>
-              <div class="field">
+              <div class="field" id="versionRetentionRow" style="display: none;">
                 <label for="versionRetention">Keep versions on GitHub</label>
                 <input id="versionRetention" type="number" min="1" max="100" />
                 <p style="font-size: 0.8rem; color: var(--muted); margin: 2px 0 0">Number of GitHub releases to retain</p>
@@ -619,6 +619,7 @@
         authMethodHelp: document.getElementById("authMethodHelp"),
         branch: document.getElementById("branch"),
         versionRetention: document.getElementById("versionRetention"),
+        versionRetentionRow: document.getElementById("versionRetentionRow"),
         syncInterval: document.getElementById("syncInterval"),
         autoSyncEnabled: document.getElementById("autoSyncEnabled"),
         autoSyncOptions: document.getElementById("autoSyncOptions"),
@@ -832,6 +833,14 @@
         updateSchedulerStatus(enabled);
       }
 
+      function updateVersionRetentionVisibility() {
+        const show = el.autoSyncCreateRelease.checked;
+        const row = document.getElementById("versionRetentionRow");
+        if (row) {
+          row.style.display = show ? "block" : "none";
+        }
+      }
+
       function updateSchedulerStatus(enabled) {
         el.schedulerStatus.textContent = enabled ? "Enabled" : "Disabled";
         el.schedulerStatus.style.color = enabled ? "var(--good)" : "var(--err)";
@@ -840,6 +849,7 @@
       }
 
       el.autoSyncEnabled.addEventListener("change", toggleAutoSyncOptions);
+      el.autoSyncCreateRelease.addEventListener("change", updateVersionRetentionVisibility);
 
       function humanizeRepoName(name) {
         return name
@@ -982,6 +992,7 @@
         el.autoSyncTime.value = data.auto_sync_time || "03:00";
         el.autoSyncCreateRelease.checked = Boolean(data.auto_sync_create_release !== false);
         toggleAutoSyncOptions();
+        updateVersionRetentionVisibility();
         el.includeAddonConfigs.checked = Boolean(data.include_addon_configs);
         el.includeMedia.checked = Boolean(data.include_media);
         el.includeShare.checked = Boolean(data.include_share);
